@@ -87,7 +87,7 @@ export default function WASPER1() {
             </span>
           </div>
 
-          <ModelViewer modelPath="/models/wasper_event.glb" />
+          <ModelViewer modelPath="/models/wasper_compressed.glb" />
         </motion.div>
 
         {/* ── Text + Stats ─────────────────────────────────────────────── */}

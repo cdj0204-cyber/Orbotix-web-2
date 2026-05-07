@@ -42,7 +42,7 @@ export default function ViewerPage() {
 
       {/* ── Canvas ───────────────────────────────────────────────────────── */}
       <div className="relative flex-1 min-h-0">
-        <ViewerClient />
+        <ViewerClient modelPath="/models/vigil_compressed.glb" />
 
         {/* corner bracket decorations */}
         {[
