@@ -251,7 +251,7 @@ export default function VigilDetailClient() {
   });
 
   return (
-    <div className="bg-black overflow-x-hidden">
+    <div className="overflow-x-hidden relative z-[3]">
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section
         ref={heroRef}

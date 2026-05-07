@@ -1,4 +1,3 @@
-import GridSpotlight from "@/components/GridSpotlight";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Values from "@/components/Values";
@@ -12,7 +11,6 @@ import Footer from "@/components/Footer";
 export default function Home() {
   return (
     <>
-      <GridSpotlight />
       <Navbar />
       <main>
         <Hero />
