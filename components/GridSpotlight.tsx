@@ -64,11 +64,12 @@ export default function BackgroundReveal() {
           backdropFilter: "blur(18px)",
           WebkitBackdropFilter: "blur(18px)",
           zIndex: 1,
+          pointerEvents: "none",
         }}
       />
 
       {/* 다크 오버레이 */}
-      <div className="fixed inset-0 bg-black/60" style={{ zIndex: 2 }} />
+      <div className="fixed inset-0 bg-black/60" style={{ zIndex: 2, pointerEvents: "none" }} />
     </>
   );
 }

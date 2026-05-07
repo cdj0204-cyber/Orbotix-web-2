@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 
 type DropdownItem = { label: string; href: string };
 type NavItem =
@@ -11,14 +12,15 @@ type NavItem =
 
 const navItems: NavItem[] = [
   {
-    label: "WASPER-1",
-    href: "#wasper-1",
+    label: "ATA SYSTEM",
+    dropdown: [
+      { label: "WASPER-1", href: "#wasper-1" },
+    ],
   },
   {
     label: "VMBRA System",
     dropdown: [
-      { label: "Overview", href: "#vmbra-system" },
-      { label: "VIGIL-1", href: "#vigil-1" },
+      { label: "VIGIL-1", href: "/vigil-1" },
     ],
   },
   {
@@ -31,51 +33,26 @@ const navItems: NavItem[] = [
   },
 ];
 
-function scrollTo(href: string) {
+function scrollToAnchor(href: string) {
   const el = document.querySelector(href);
   if (el) el.scrollIntoView({ behavior: "smooth" });
 }
 
-function DropdownMenu({ items }: { items: DropdownItem[] }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8 }}
-      transition={{ duration: 0.18 }}
-      className="absolute top-full left-0 mt-2 min-w-[160px] bg-black border border-white/20 py-1 z-50"
-    >
-      {items.map((item) => (
-        <button
-          key={item.label}
-          onClick={() => scrollTo(item.href)}
-          className="w-full text-left px-5 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors tracking-widest uppercase font-medium"
-        >
-          {item.label}
-        </button>
-      ))}
-    </motion.div>
-  );
-}
-
 function NavDropdown({ item }: { item: NavItem & { dropdown: DropdownItem[] } }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  const show = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setOpen(true);
+  };
+  const hide = () => {
+    timerRef.current = setTimeout(() => setOpen(false), 120);
+  };
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 text-xs tracking-widest uppercase font-semibold text-white/70 hover:text-white transition-colors py-1"
-      >
+    <div className="relative" onMouseEnter={show} onMouseLeave={hide}>
+      <button className="flex items-center gap-1.5 text-xs tracking-widest uppercase font-semibold text-white/70 hover:text-white transition-colors py-1">
         {item.label}
         <svg
           width="10"
@@ -87,7 +64,34 @@ function NavDropdown({ item }: { item: NavItem & { dropdown: DropdownItem[] } })
           <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
-      <AnimatePresence>{open && <DropdownMenu items={item.dropdown} />}</AnimatePresence>
+
+      {open && (
+        <div
+          className="absolute top-full left-0 mt-2 z-[200]"
+          onMouseEnter={show}
+          onMouseLeave={hide}
+        >
+          {item.dropdown.map((sub) =>
+            sub.href.startsWith("/") ? (
+              <Link
+                key={sub.label}
+                href={sub.href}
+                className="block min-w-[160px] px-5 py-4 bg-black border border-white/20 text-sm text-white/50 hover:text-white transition-colors tracking-widest uppercase font-medium"
+              >
+                {sub.label}
+              </Link>
+            ) : (
+              <button
+                key={sub.label}
+                onClick={() => scrollToAnchor(sub.href)}
+                className="block w-full text-left min-w-[160px] px-5 py-4 bg-black border border-white/20 text-sm text-white/50 hover:text-white transition-colors tracking-widest uppercase font-medium"
+              >
+                {sub.label}
+              </button>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -131,7 +135,7 @@ export default function Navbar() {
             ) : (
               <button
                 key={item.label}
-                onClick={() => item.href && scrollTo(item.href)}
+                onClick={() => item.href && scrollToAnchor(item.href)}
                 className="text-xs tracking-widest uppercase font-semibold text-white/70 hover:text-white transition-colors"
               >
                 {item.label}
@@ -141,32 +145,25 @@ export default function Navbar() {
         </div>
 
         <button
-          onClick={() => scrollTo("#contact-cta")}
+          onClick={() => scrollToAnchor("#contact-cta")}
           className="hidden md:block px-5 py-2 border border-white text-white text-xs tracking-widest uppercase font-semibold hover:bg-white hover:text-black transition-all duration-200"
         >
           Contact us
         </button>
 
+        {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen((o) => !o)}
           className="md:hidden flex flex-col gap-1.5 p-2"
           aria-label="Toggle menu"
         >
-          <motion.span
-            animate={mobileOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
-            className="block w-6 h-0.5 bg-white origin-center"
-          />
-          <motion.span
-            animate={mobileOpen ? { opacity: 0 } : { opacity: 1 }}
-            className="block w-6 h-0.5 bg-white"
-          />
-          <motion.span
-            animate={mobileOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
-            className="block w-6 h-0.5 bg-white origin-center"
-          />
+          <motion.span animate={mobileOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }} className="block w-6 h-0.5 bg-white origin-center" />
+          <motion.span animate={mobileOpen ? { opacity: 0 } : { opacity: 1 }} className="block w-6 h-0.5 bg-white" />
+          <motion.span animate={mobileOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }} className="block w-6 h-0.5 bg-white origin-center" />
         </button>
       </nav>
 
+      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -183,7 +180,7 @@ export default function Navbar() {
                     onClick={() =>
                       item.dropdown
                         ? setMobileExpanded(mobileExpanded === item.label ? null : item.label)
-                        : (scrollTo(item.href!), setMobileOpen(false))
+                        : (scrollToAnchor(item.href!), setMobileOpen(false))
                     }
                     className="w-full flex items-center justify-between py-3 text-sm tracking-widest uppercase font-semibold text-white/80 hover:text-white transition-colors"
                   >
@@ -203,22 +200,33 @@ export default function Navbar() {
                         exit={{ height: 0 }}
                         className="overflow-hidden"
                       >
-                        {item.dropdown.map((sub) => (
-                          <button
-                            key={sub.label}
-                            onClick={() => { scrollTo(sub.href); setMobileOpen(false); }}
-                            className="block w-full text-left pl-4 py-2.5 text-sm text-white/50 hover:text-white tracking-widest uppercase transition-colors"
-                          >
-                            {sub.label}
-                          </button>
-                        ))}
+                        {item.dropdown.map((sub) =>
+                          sub.href.startsWith("/") ? (
+                            <Link
+                              key={sub.label}
+                              href={sub.href}
+                              onClick={() => setMobileOpen(false)}
+                              className="block w-full text-left pl-4 py-2.5 text-sm text-white/50 hover:text-white tracking-widest uppercase transition-colors"
+                            >
+                              {sub.label}
+                            </Link>
+                          ) : (
+                            <button
+                              key={sub.label}
+                              onClick={() => { scrollToAnchor(sub.href); setMobileOpen(false); }}
+                              className="block w-full text-left pl-4 py-2.5 text-sm text-white/50 hover:text-white tracking-widest uppercase transition-colors"
+                            >
+                              {sub.label}
+                            </button>
+                          )
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               ))}
               <button
-                onClick={() => { scrollTo("#contact-cta"); setMobileOpen(false); }}
+                onClick={() => { scrollToAnchor("#contact-cta"); setMobileOpen(false); }}
                 className="mt-3 w-full py-3 border border-white text-white text-xs tracking-widest uppercase font-semibold hover:bg-white hover:text-black transition-all"
               >
                 Contact us
