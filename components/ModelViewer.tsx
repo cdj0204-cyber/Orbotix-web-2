@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 export default function ModelViewer({ modelPath = "/models/vigil_event.glb" }: { modelPath?: string }) {
@@ -98,7 +99,10 @@ export default function ModelViewer({ modelPath = "/models/vigil_event.glb" }: {
     scene.add(gridHelper);
 
     // ── Load GLB ───────────────────────────────────────────────────────────
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath("/draco/");
     const loader = new GLTFLoader();
+    loader.setDRACOLoader(dracoLoader);
     let animMixer: THREE.AnimationMixer | null = null;
 
     loader.load(
@@ -189,6 +193,7 @@ export default function ModelViewer({ modelPath = "/models/vigil_event.glb" }: {
       controls.removeEventListener("start", onStart);
       controls.removeEventListener("end",   onEnd);
       controls.dispose();
+      dracoLoader.dispose();
       renderer.dispose();
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
