@@ -100,7 +100,8 @@ export default function ModelViewer({ modelPath = "/models/vigil_event.glb" }: {
 
     // ── Load GLB ───────────────────────────────────────────────────────────
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("/draco/");
+    dracoLoader.setDecoderPath(window.location.origin + "/draco/");
+    dracoLoader.preload();
     const loader = new GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
     let animMixer: THREE.AnimationMixer | null = null;
@@ -156,8 +157,9 @@ export default function ModelViewer({ modelPath = "/models/vigil_event.glb" }: {
         }
       },
       (err) => {
-        console.error("GLB load error:", err);
-        setError("모델을 불러오지 못했습니다.");
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("GLB load error:", msg);
+        setError(msg);
         setLoading(false);
       }
     );
@@ -199,7 +201,7 @@ export default function ModelViewer({ modelPath = "/models/vigil_event.glb" }: {
         mount.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [modelPath]);
 
   return (
     <div className="relative w-full h-full">
