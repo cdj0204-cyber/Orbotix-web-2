@@ -6,7 +6,10 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-export default function ModelViewer({ modelPath = "/models/vigil_event.glb" }: { modelPath?: string }) {
+// 한 번 로드한 GLB를 메모리에 보관 → 같은 모델 재사용 시 즉시 표시
+THREE.Cache.enabled = true;
+
+export default function ModelViewer({ modelPath = "/models/vigil_compressed.glb" }: { modelPath?: string }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);

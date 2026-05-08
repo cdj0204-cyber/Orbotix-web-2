@@ -113,10 +113,7 @@ export default function Navbar() {
       style={{ backgroundColor: "#000000", zIndex: 9999 }}
     >
       <nav className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="flex items-center"
-        >
+        <Link href="/" className="flex items-center px-4 py-3 -mx-4 -my-3">
           <Image
             src="/image/Orbotix_Logo_Icon_W.png"
             alt="Orbotix"
@@ -125,7 +122,7 @@ export default function Navbar() {
             className="object-contain"
             priority
           />
-        </button>
+        </Link>
 
         <div className="hidden md:flex items-center gap-10">
           {navItems.map((item) =>

@@ -91,25 +91,24 @@ export default function VIGIL1() {
         </motion.div>
 
         {/* ── Text + Stats ─────────────────────────────────────────────── */}
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 mb-16">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 mb-16 items-stretch">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6 }}
+            className="flex flex-col justify-start h-full"
           >
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tighter text-white uppercase leading-none mb-6">
-              VIGIL-1
-            </h2>
-            <p className="text-white/30 text-sm tracking-[0.2em] uppercase font-semibold mb-6">
-              Autonomous Persistent Surveillance Drone
-            </p>
-            <p className="text-white/50 text-base leading-relaxed">
-              VIGIL-1 is the mobile intelligence node of the VMBRA System — a fixed-wing
-              autonomous platform designed for long-endurance, covert area surveillance.
-              Operating silently and autonomously, VIGIL-1 maintains persistent coverage
-              of high-value areas, feeding real-time intelligence into the VMBRA mesh
-              without revealing its presence.
-            </p>
+            <div>
+              <p className="text-sm sm:text-base lg:text-[15px] font-medium tracking-tighter text-white uppercase leading-none mb-3">
+                VMBRA SYSTEM
+              </p>
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tighter text-white uppercase leading-none">
+                VIGIL 01
+              </h2>
+            </div>
+            <button className="mt-auto self-start px-6 py-3 border border-white text-white text-xs tracking-widest uppercase font-semibold hover:bg-white hover:text-black transition-all duration-200">
+              VIEW VIGIL 01
+            </button>
           </motion.div>
 
           <motion.div

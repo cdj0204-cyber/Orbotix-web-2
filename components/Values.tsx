@@ -23,7 +23,7 @@ export default function Values() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section className="relative py-28 sm:py-36">
+    <section id="values-section" className="relative py-28 sm:py-36">
       <div ref={ref} className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16">
           {values.map((v, i) => (

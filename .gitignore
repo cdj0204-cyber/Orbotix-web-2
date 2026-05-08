@@ -39,6 +39,11 @@ yarn-error.log*
 # claude code
 .claude/
 
+# Large video files (local only, not for deployment)
+public/video/Vigil/
+public/video/Main page/main video_1.mp4
+public/video/Main page/main video_1_webm_2.webm
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -12,7 +12,7 @@ const capabilities = [
   "Seamless handoff between stationary sensors and mobile VIGIL-1 assets",
 ];
 
-export default function VMBRASystem() {
+export default function VMBRASystem({ hideButton }: { hideButton?: boolean } = {}) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
@@ -65,12 +65,14 @@ export default function VMBRASystem() {
               ))}
             </ul>
 
-            <button
-              onClick={() => document.querySelector("#vigil-1")?.scrollIntoView({ behavior: "smooth" })}
-              className="px-8 py-3 border border-white text-white text-xs tracking-[0.25em] uppercase font-bold hover:bg-white hover:text-black transition-all duration-200"
-            >
-              View VIGIL-1 →
-            </button>
+            {!hideButton && (
+              <button
+                onClick={() => document.querySelector("#vigil-1")?.scrollIntoView({ behavior: "smooth" })}
+                className="px-8 py-3 border border-white text-white text-xs tracking-[0.25em] uppercase font-bold hover:bg-white hover:text-black transition-all duration-200"
+              >
+                View VIGIL-1 →
+              </button>
+            )}
           </motion.div>
 
           <motion.div

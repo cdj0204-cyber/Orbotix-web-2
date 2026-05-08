@@ -10,6 +10,7 @@ import {
 } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import VMBRASystem from "@/components/VMBRASystem";
 
 const ModelViewer = dynamic(() => import("@/components/ModelViewer"), {
   ssr: false,
@@ -380,6 +381,9 @@ export default function VigilDetailClient() {
           </div>
         </div>
       </section>
+
+      {/* ── VMBRA System ─────────────────────────────────────────────────── */}
+      <VMBRASystem hideButton />
 
       {/* ── Specs ────────────────────────────────────────────────────────── */}
       <SpecsSection />
