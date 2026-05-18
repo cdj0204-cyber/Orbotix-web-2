@@ -4,11 +4,12 @@ import { useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import VideoBackground from "@/components/VideoBackground";
 
-const WAVE_R   = 220;
-const MAX_DISP = 7;
-const MIN_PX   = 2;
-const MAX_PX   = 10;
-const PAD_Y    = 20;
+const WAVE_R        = 220;
+const MAX_DISP      = 7;
+const PAD_Y         = 20;
+const DIGIT_SIZE    = 10;  // 0/1 고정 폰트 크기 (px)
+const GRID_PX       = 7;   // 그리드 셀 간격 (px)
+const DENSITY_STEPS = 10;  // 밀도 단계 수
 
 /* ── Pixel-wave text ─────────────────────────────────────────────── */
 function WaveText({ text, className }: { text: string; className?: string }) {
@@ -61,25 +62,50 @@ function WaveText({ text, className }: { text: string; className?: string }) {
             el.style.opacity   = "0";
             el.style.transform = "";
 
-            // pixel size: MIN_PX near cursor → MAX_PX far
-            const ps  = Math.max(MIN_PX, Math.min(MAX_PX, MIN_PX + (dist / WAVE_R) * (MAX_PX - MIN_PX)));
-            const psi = Math.round(ps);
-            const key = `${ch}|${psi}|${Math.round(r.width)}|${Math.round(r.height)}`;
+            // 거리 기반 밀도: 가까울수록 성기게(0), 멀수록 촘촘하게(1)
+            const densityStep = Math.round((dist / WAVE_R) * DENSITY_STEPS);
+            const showProb    = 0.5 + (densityStep / DENSITY_STEPS) * 0.5; // 0.5(근처) → 1.0(멀리)
+            const key = `${ch.toUpperCase()}|${densityStep}|${Math.round(r.width)}|${Math.round(r.height)}`;
 
             let sprite = spriteMap.current.get(key);
             if (!sprite) {
-              // render char at 1/psi scale, then drawImage scales it back up → blocky pixel grid
-              const sw = Math.max(1, Math.ceil(r.width  / psi));
-              const sh = Math.max(1, Math.ceil(r.height / psi));
+              const fullW = Math.max(1, Math.ceil(r.width));
+              const fullH = Math.max(1, Math.ceil(r.height));
+
+              // 1) 문자를 풀 사이즈로 렌더링 → 픽셀 커버리지 샘플링용
+              const sampleCv = document.createElement("canvas");
+              sampleCv.width  = fullW;
+              sampleCv.height = fullH;
+              const sc = sampleCv.getContext("2d");
+              if (sc && fontStr.current) {
+                sc.font         = fontStr.current;
+                sc.fillStyle    = "#ffffff";
+                sc.textBaseline = "middle";
+                sc.fillText(ch.toUpperCase(), 0, fullH / 2);
+              }
+              const imgData = sc?.getImageData(0, 0, fullW, fullH);
+
+              // 2) 고정 크기 0/1을 확률적으로 배치 → 밀도로 성김/촘촘함 표현
               sprite = document.createElement("canvas");
-              sprite.width  = sw;
-              sprite.height = sh;
+              sprite.width  = fullW;
+              sprite.height = fullH;
               const tc = sprite.getContext("2d");
-              if (tc && fontStr.current) {
-                tc.font         = fontStr.current.replace(/(\d+\.?\d*)px/, (_, s) => `${parseFloat(s) / psi}px`);
+              if (tc && imgData) {
+                tc.font         = `${DIGIT_SIZE}px monospace`;
                 tc.fillStyle    = colorStr.current;
-                tc.textBaseline = "middle";
-                tc.fillText(ch, 0, sh / 2);
+                tc.textBaseline = "top";
+                const cols = Math.ceil(fullW / GRID_PX);
+                const rows = Math.ceil(fullH / GRID_PX);
+                for (let row = 0; row < rows; row++) {
+                  for (let col = 0; col < cols; col++) {
+                    const sx = Math.min(fullW - 1, Math.floor(col * GRID_PX + GRID_PX / 2));
+                    const sy = Math.min(fullH - 1, Math.floor(row * GRID_PX + GRID_PX / 2));
+                    const alpha = imgData.data[(sy * fullW + sx) * 4 + 3];
+                    if (alpha > 40 && Math.random() < showProb) {
+                      tc.fillText(Math.random() > 0.5 ? "0" : "1", col * GRID_PX, row * GRID_PX);
+                    }
+                  }
+                }
               }
               spriteMap.current.set(key, sprite);
             }

@@ -23,9 +23,7 @@ body {
 }
 
 section,
-header,
-footer,
-nav {
+footer {
   position: relative;
   z-index: 10;
 }

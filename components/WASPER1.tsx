@@ -87,7 +87,7 @@ export default function WASPER1() {
             </span>
           </div>
 
-          <ModelViewer modelPath="/models/wasper_compressed.glb" />
+          <ModelViewer modelPath="/models/wasper_compressed.glb" cameraZ={2.5} rotationY={Math.PI} />
         </motion.div>
 
         {/* ── Text + Stats ─────────────────────────────────────────────── */}

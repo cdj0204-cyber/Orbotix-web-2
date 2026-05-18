@@ -87,7 +87,7 @@ export default function VIGIL1() {
             </span>
           </div>
 
-          <ModelViewer modelPath="/models/vigil_compressed.glb" />
+          <ModelViewer modelPath="/models/vigil_compressed.glb" cameraZ={2.5} rotationY={Math.PI} />
         </motion.div>
 
         {/* ── Text + Stats ─────────────────────────────────────────────── */}

@@ -14,7 +14,7 @@ const navItems: NavItem[] = [
   {
     label: "ATA SYSTEM",
     dropdown: [
-      { label: "WASPER-1", href: "#wasper-1" },
+      { label: "WASPER-1", href: "/wasper-1" },
     ],
   },
   {
@@ -110,7 +110,7 @@ export default function Navbar() {
   return (
     <header
       className="fixed top-0 left-0 right-0 transition-none"
-      style={{ backgroundColor: "#000000", zIndex: 9999 }}
+      style={{ position: "fixed", backgroundColor: "#000000", zIndex: 99999 }}
     >
       <nav className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center px-4 py-3 -mx-4 -my-3">

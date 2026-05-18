@@ -33,7 +33,7 @@ export default function Values() {
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: i * 0.15 }}
             >
-              <div className="text-white/10 text-[80px] sm:text-[100px] font-medium leading-none tracking-tighter mb-4 select-none">
+              <div className="text-white text-[80px] sm:text-[100px] font-medium leading-none tracking-tighter mb-4 select-none">
                 {String(i + 1).padStart(2, "0")}
               </div>
               <h3 className="text-2xl sm:text-3xl font-medium tracking-tighter text-white uppercase mb-4">

@@ -9,7 +9,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 // 한 번 로드한 GLB를 메모리에 보관 → 같은 모델 재사용 시 즉시 표시
 THREE.Cache.enabled = true;
 
-export default function ModelViewer({ modelPath = "/models/vigil_compressed.glb" }: { modelPath?: string }) {
+export default function ModelViewer({ modelPath = "/models/vigil_compressed.glb", cameraZ = 4.5, rotationY = 0 }: { modelPath?: string; cameraZ?: number; rotationY?: number }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -33,7 +33,7 @@ export default function ModelViewer({ modelPath = "/models/vigil_compressed.glb"
       0.01,
       1000
     );
-    camera.position.set(0, 1.2, 4.5);
+    camera.position.set(0, 1.2, cameraZ);
 
     // ── Renderer ───────────────────────────────────────────────────────────
     const renderer = new THREE.WebGLRenderer({
@@ -122,6 +122,7 @@ export default function ModelViewer({ modelPath = "/models/vigil_compressed.glb"
         const scale = 2.4 / maxDim;
         model.scale.setScalar(scale);
         model.position.sub(center.multiplyScalar(scale));
+        model.rotation.y = rotationY;
 
         // shadows & material tweaks
         model.traverse((child) => {
@@ -204,7 +205,7 @@ export default function ModelViewer({ modelPath = "/models/vigil_compressed.glb"
         mount.removeChild(renderer.domElement);
       }
     };
-  }, [modelPath]);
+  }, [modelPath, cameraZ, rotationY]);
 
   return (
     <div className="relative w-full h-full">

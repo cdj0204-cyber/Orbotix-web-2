@@ -252,7 +252,7 @@ export default function VigilDetailClient() {
   });
 
   return (
-    <div className="overflow-x-hidden relative z-[3]">
+    <div className="overflow-x-hidden relative" style={{ zIndex: 1 }}>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section
         ref={heroRef}
