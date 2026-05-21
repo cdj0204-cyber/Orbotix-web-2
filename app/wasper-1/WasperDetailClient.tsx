@@ -87,8 +87,8 @@ export default function WasperDetailClient() {
     const tick = () => {
       if (video.duration) {
         const diff = targetTimeRef.current - video.currentTime;
-        if (Math.abs(diff) > 0.001) {
-          video.currentTime = video.currentTime + diff * 0.12;
+        if (Math.abs(diff) > 0.016) {
+          video.currentTime = video.currentTime + diff * 0.08;
         }
       }
       rafRef.current = requestAnimationFrame(tick);
