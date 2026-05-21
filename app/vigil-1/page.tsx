@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import VigilDetailClient from "./VigilDetailClient";
-import GridSpotlight from "@/components/GridSpotlight";
 
 export const metadata: Metadata = {
   title: "VIGIL-1 — Autonomous Persistent Surveillance | ORBOTIX INDUSTRIES",
@@ -12,7 +11,6 @@ export const metadata: Metadata = {
 export default function Vigil1Page() {
   return (
     <>
-      <GridSpotlight />
       <Navbar />
       <VigilDetailClient />
     </>
