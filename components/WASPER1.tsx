@@ -90,64 +90,64 @@ export default function WASPER1() {
           <ModelViewer modelPath="/models/wasper_compressed.glb" cameraZ={2.5} rotationY={Math.PI} />
         </motion.div>
 
-        {/* ── Text + Stats ─────────────────────────────────────────────── */}
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 mb-16 items-stretch">
+        {/* ── Title row (좌측만) ───────────────────────────────────────── */}
+        <div className="mb-32">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6 }}
-            className="flex flex-col justify-start h-full"
+            className="flex flex-col gap-8 lg:w-1/2"
           >
             <div>
-              <p className="text-sm sm:text-base lg:text-[15px] font-medium tracking-tighter text-white uppercase leading-none mb-3">
+              <p className="text-xs font-medium text-white uppercase leading-none mb-1">
                 ATA SYSTEM
               </p>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tighter text-white uppercase leading-none">
-                WASPER 01
-              </h2>
-            </div>
-            <button className="mt-auto self-start px-6 py-3 border border-white text-white text-xs tracking-widest uppercase font-semibold hover:bg-white hover:text-black transition-all duration-200">
-              VIEW WASPER 01
-            </button>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="grid grid-cols-2 gap-4 content-start"
-          >
-            {[
-              { v: "420 km/h", l: "Max Speed" },
-              { v: "350 km", l: "Operational Range" },
-              { v: "14 hrs", l: "Endurance" },
-              { v: "Up to 512", l: "Swarm Size" },
-            ].map((s) => (
-              <div key={s.l} className="bg-white/[0.03] p-5">
-                <div className="text-white text-2xl font-medium tracking-tight mb-1">{s.v}</div>
-                <div className="text-white/30 text-[10px] tracking-[0.2em] uppercase">{s.l}</div>
+              <div className="flex items-end gap-8">
+                <h2 className="text-[4.5rem] sm:text-6xl lg:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none whitespace-nowrap">
+                  WASPER 01
+                </h2>
+                <button className="text-white text-xs font-medium uppercase underline underline-offset-4 hover:text-white/60 transition-colors duration-200 whitespace-nowrap">
+                  VIEW MORE
+                </button>
               </div>
-            ))}
+            </div>
           </motion.div>
         </div>
 
-        {/* ── Feature cards ────────────────────────────────────────────── */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* ── Stats row (4분할 가로배치) ───────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 mb-9"
+        >
+          {[
+            { v: "420 km/h", l: "Max Speed" },
+            { v: "350 km", l: "Operational Range" },
+            { v: "14 hrs", l: "Endurance" },
+            { v: "Up to 512", l: "Swarm Size" },
+          ].map((s) => (
+            <div key={s.l} className="pt-4">
+              <div className="text-white text-xs font-medium uppercase mb-1">{s.l}</div>
+              <div className="text-white text-2xl font-medium tracking-tight">{s.v}</div>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* ── Feature list (4분할 가로배치) ───────────────────────────── */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-0">
           {features.map((f, i) => (
             <motion.div
               key={f.title}
               initial={{ opacity: 0, y: 24 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
-              className="bg-white/[0.03] p-6"
+              className="pt-6 pb-6"
             >
-              <div className="text-white/20 text-[9px] tracking-[0.3em] font-mono mb-3">
-                {String(i + 1).padStart(2, "0")}
-              </div>
-              <h4 className="text-white text-xs tracking-[0.2em] font-semibold uppercase mb-3">
-                {f.title}
+              <h4 className="text-white text-xs font-medium uppercase mb-3">
+                {String(i + 1).padStart(2, "0")}. {f.title}
               </h4>
-              <p className="text-white/40 text-sm leading-relaxed">{f.body}</p>
+              <p className="text-white text-xs leading-relaxed font-medium">{f.body}</p>
             </motion.div>
           ))}
         </div>
