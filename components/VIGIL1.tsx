@@ -40,7 +40,7 @@ export default function VIGIL1() {
 
   return (
     <section id="vigil-1" className="relative py-28 sm:py-36 bg-white/[0.015]">
-      <div ref={ref} className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div ref={ref} className="px-10">
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}

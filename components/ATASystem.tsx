@@ -33,7 +33,7 @@ export default function ATASystem() {
 
   return (
     <section id="ata-system" className="relative py-28 sm:py-36">
-      <div ref={ref} className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div ref={ref} className="px-10">
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}

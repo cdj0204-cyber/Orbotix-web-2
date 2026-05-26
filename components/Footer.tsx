@@ -63,7 +63,7 @@ function scrollTo(href: string) {
 export default function Footer() {
   return (
     <footer className="relative bg-black pt-16 pb-8">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div className="px-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-14">
           <div className="col-span-2 md:col-span-1">
             <button

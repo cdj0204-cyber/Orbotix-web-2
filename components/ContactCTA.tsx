@@ -21,7 +21,7 @@ export default function ContactCTA() {
         </span>
       </div>
 
-      <div ref={ref} className="relative max-w-4xl mx-auto px-6 lg:px-8 text-center">
+      <div ref={ref} className="relative px-10 text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}

@@ -112,7 +112,7 @@ export default function Navbar() {
       className="fixed top-0 left-0 right-0 transition-none"
       style={{ position: "fixed", backgroundColor: "#000000", zIndex: 99999 }}
     >
-      <nav className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
+      <nav className="px-10 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center px-4 py-3 -mx-4 -my-3">
           <Image
             src="/image/Orbotix_Logo_Icon_W.png"

@@ -17,20 +17,24 @@ const ModelViewer = dynamic(() => import("@/components/ModelViewer"), {
 
 const features = [
   {
-    title: "SWARM COORDINATION",
-    body: "Self-healing mesh network synchronizes up to 512 units with zero single-point-of-failure architecture.",
+    title: "AUTONOMOUS FLIGHT",
+    body: "Autonomous navigation enables stable flight and terminal accuracy, even under GPS-denied or A2/AD conditions.",
   },
   {
-    title: "OPEN PAYLOAD",
-    body: "Modular hardpoints accept kinetic, EW, ISR, and logistics modules interchangeably in under 4 minutes.",
+    title: "AI TARGETING & LOCK",
+    body: "Onboard AI targeting algorithms classify and prioritize threats in real time, ensuring rapid and precise engagement.",
   },
   {
-    title: "EDGE AI",
-    body: "400+ TOPS onboard processing enables friend/foe classification and target engagement with no cloud dependency.",
+    title: "SWARM CAPABILITY",
+    body: "Multiple autonomous drones operate in synchronized formations, overwhelming defenses and adapting dynamically to mission needs.",
   },
   {
-    title: "ALL-DOMAIN",
-    body: "Air, ground, and maritime deployment profiles — multi-domain coordination through a single command interface.",
+    title: "RAPID DEPLOYMENT",
+    body: "Compact form factor and intuitive interface allow launch within seconds, reducing preparation time and operator exposure.",
+  },
+  {
+    title: "ALL-CONDITION PERFORMANCE",
+    body: "Built for endurance, night operations, and variable environments, maintaining effectiveness in all-weather and electronic warfare scenarios.",
   },
 ];
 
@@ -40,12 +44,12 @@ export default function WASPER1() {
 
   return (
     <section id="wasper-1" className="relative py-28 sm:py-36 bg-white/[0.015]">
-      <div ref={ref} className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div ref={ref} className="px-10">
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          className="text-white/30 text-[10px] tracking-[0.4em] uppercase font-mono mb-8"
+          className="text-white/30 text-[15px] tracking-[0.4em] uppercase font-mono mb-8"
         >
           01.1 / WASPER-1
         </motion.p>
@@ -91,7 +95,7 @@ export default function WASPER1() {
         </motion.div>
 
         {/* ── Title row (좌측만) ───────────────────────────────────────── */}
-        <div className="mb-32">
+        <div className="mb-[250px]">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -99,14 +103,14 @@ export default function WASPER1() {
             className="flex flex-col gap-8 lg:w-1/2"
           >
             <div>
-              <p className="text-xs font-medium text-white uppercase leading-none mb-1">
+              <p className="text-lg font-medium text-white uppercase leading-none mb-1">
                 ATA SYSTEM
               </p>
-              <div className="flex items-end gap-8">
-                <h2 className="text-[4.5rem] sm:text-6xl lg:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none whitespace-nowrap">
+              <div className="flex items-baseline gap-8">
+                <h2 className="text-[6.75rem] sm:text-[90px] lg:text-[13.5rem] font-medium tracking-tighter text-white uppercase leading-none whitespace-nowrap">
                   WASPER 01
                 </h2>
-                <button className="text-white text-xs font-medium uppercase underline underline-offset-4 hover:text-white/60 transition-colors duration-200 whitespace-nowrap">
+                <button className="text-white text-lg font-medium uppercase underline underline-offset-4 hover:text-white/60 transition-colors duration-200 whitespace-nowrap">
                   VIEW MORE
                 </button>
               </div>
@@ -114,43 +118,42 @@ export default function WASPER1() {
           </motion.div>
         </div>
 
-        {/* ── Stats row (4분할 가로배치) ───────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 mb-9"
-        >
-          {[
-            { v: "420 km/h", l: "Max Speed" },
-            { v: "350 km", l: "Operational Range" },
-            { v: "14 hrs", l: "Endurance" },
-            { v: "Up to 512", l: "Swarm Size" },
-          ].map((s) => (
-            <div key={s.l} className="pt-4">
-              <div className="text-white text-xs font-medium uppercase mb-1">{s.l}</div>
-              <div className="text-white text-2xl font-medium tracking-tight">{s.v}</div>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* ── Feature list (4분할 가로배치) ───────────────────────────── */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-0">
-          {features.map((f, i) => (
+        {/* ── Stats + Features (5행 2열) ──────────────────────────────── */}
+        {(() => {
+          const stats = [
+            { v: "15 km",   l: "Max. Range"     },
+            { v: "70 km/h", l: "Max. Speed"     },
+            { v: "2.3 kg",  l: "Max. Weight"    },
+            { v: "30 min",  l: "Max. Endurance" },
+          ];
+          return features.map((f, i) => (
             <motion.div
               key={f.title}
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
-              className="pt-6 pb-6"
+              transition={{ duration: 0.5, delay: 0.1 + i * 0.08 }}
+              className="grid grid-cols-2 gap-x-8 py-6"
             >
-              <h4 className="text-white text-xs font-medium uppercase mb-3">
-                {String(i + 1).padStart(2, "0")}. {f.title}
-              </h4>
-              <p className="text-white text-xs leading-relaxed font-medium">{f.body}</p>
+              {/* 왼쪽: 스펙 (4개까지만) */}
+              <div>
+                {stats[i] ? (
+                  <>
+                    <div className="text-white text-[15px] font-medium uppercase tracking-widest mb-2">{stats[i].l}</div>
+                    <div className="text-white text-4xl font-medium tracking-tight">{stats[i].v}</div>
+                  </>
+                ) : null}
+              </div>
+
+              {/* 오른쪽: 기능 */}
+              <div>
+                <h4 className="text-white text-[15px] font-medium uppercase tracking-widest mb-2">
+                  {String(i + 1).padStart(2, "0")}. {f.title}
+                </h4>
+                <p className="text-white text-lg leading-relaxed">{f.body}</p>
+              </div>
             </motion.div>
-          ))}
-        </div>
+          ));
+        })()}
       </div>
     </section>
   );
