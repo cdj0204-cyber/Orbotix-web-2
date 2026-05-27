@@ -279,7 +279,7 @@ export default function Hero() {
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex flex-col items-center justify-center text-center px-10"
+      className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 sm:px-10"
     >
       <VideoBackground />
       <CrosshairCursor />

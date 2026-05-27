@@ -39,8 +39,8 @@ export default function VIGIL1() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="vigil-1" className="relative py-28 sm:py-36 bg-white/[0.015]">
-      <div ref={ref} className="px-10">
+    <section id="vigil-1" className="relative py-16 sm:py-28 lg:py-36 bg-white/[0.015]">
+      <div ref={ref} className="px-4 sm:px-10">
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}

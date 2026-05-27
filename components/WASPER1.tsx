@@ -43,8 +43,8 @@ export default function WASPER1() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="wasper-1" className="relative py-28 sm:py-36 bg-white/[0.015]">
-      <div ref={ref} className="px-10">
+    <section id="wasper-1" className="relative py-16 sm:py-28 lg:py-36 bg-white/[0.015]">
+      <div ref={ref} className="px-4 sm:px-10">
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -60,7 +60,7 @@ export default function WASPER1() {
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 0.8 }}
           className="relative w-full mb-12 overflow-hidden border border-white/[0.06]"
-          style={{ height: "clamp(320px, 50vw, 560px)" }}
+          style={{ height: "clamp(240px, 60vw, 560px)" }}
         >
           {/* corner brackets */}
           {[
@@ -95,7 +95,7 @@ export default function WASPER1() {
         </motion.div>
 
         {/* ── Title row (좌측만) ───────────────────────────────────────── */}
-        <div className="mb-[250px]">
+        <div className="mb-16 sm:mb-[250px]">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -103,14 +103,14 @@ export default function WASPER1() {
             className="flex flex-col gap-8 lg:w-1/2"
           >
             <div>
-              <p className="text-lg font-medium text-white uppercase leading-none mb-1">
+              <p className="text-sm sm:text-lg font-medium text-white uppercase leading-none mb-1">
                 ATA SYSTEM
               </p>
-              <div className="flex items-baseline gap-8">
-                <h2 className="text-[6.75rem] sm:text-[90px] lg:text-[13.5rem] font-medium tracking-tighter text-white uppercase leading-none whitespace-nowrap">
+              <div className="flex items-baseline gap-4 sm:gap-8 flex-wrap">
+                <h2 className="text-[2.75rem] sm:text-[4.5rem] lg:text-[6.75rem] xl:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none">
                   WASPER 01
                 </h2>
-                <button className="text-white text-lg font-medium uppercase underline underline-offset-4 hover:text-white/60 transition-colors duration-200 whitespace-nowrap">
+                <button className="text-white text-sm sm:text-lg font-medium uppercase underline underline-offset-4 hover:text-white/60 transition-colors duration-200 whitespace-nowrap">
                   VIEW MORE
                 </button>
               </div>
@@ -132,24 +132,24 @@ export default function WASPER1() {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.1 + i * 0.08 }}
-              className="grid grid-cols-2 gap-x-8 py-6"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 py-4 sm:py-6"
             >
-              {/* 왼쪽: 스펙 (4개까지만) */}
+              {/* 스펙 (4개까지만) */}
               <div>
                 {stats[i] ? (
                   <>
-                    <div className="text-white text-[15px] font-medium uppercase tracking-widest mb-2">{stats[i].l}</div>
-                    <div className="text-white text-4xl font-medium tracking-tight">{stats[i].v}</div>
+                    <div className="text-white text-[13px] sm:text-[15px] font-medium uppercase tracking-widest mb-2">{stats[i].l}</div>
+                    <div className="text-white text-3xl sm:text-4xl font-medium tracking-tight">{stats[i].v}</div>
                   </>
                 ) : null}
               </div>
 
-              {/* 오른쪽: 기능 */}
+              {/* 기능 */}
               <div>
-                <h4 className="text-white text-[15px] font-medium uppercase tracking-widest mb-2">
+                <h4 className="text-white text-[13px] sm:text-[15px] font-medium uppercase tracking-widest mb-2">
                   {String(i + 1).padStart(2, "0")}. {f.title}
                 </h4>
-                <p className="text-white text-lg leading-relaxed">{f.body}</p>
+                <p className="text-white text-base sm:text-lg leading-relaxed">{f.body}</p>
               </div>
             </motion.div>
           ));

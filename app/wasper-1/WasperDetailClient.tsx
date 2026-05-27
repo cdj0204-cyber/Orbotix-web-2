@@ -385,7 +385,7 @@ export default function WasperDetailClient() {
             muted
             playsInline
             preload="none"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-center"
             style={{ zIndex: 1 }}
           />
 
@@ -408,8 +408,13 @@ export default function WasperDetailClient() {
           />
 
           {/* 코너 브래킷 */}
-          {["top-[40px] left-[40px] border-t border-l","top-[40px] right-[40px] border-t border-r","bottom-[40px] left-[40px] border-b border-l","bottom-[40px] right-[40px] border-b border-r"].map((cls) => (
-            <div key={cls} className={`absolute w-6 h-6 border-white/20 pointer-events-none ${cls}`} style={{ zIndex: 5 }} />
+          {[
+            "top-3 sm:top-[40px] left-3 sm:left-[40px] border-t border-l",
+            "top-3 sm:top-[40px] right-3 sm:right-[40px] border-t border-r",
+            "bottom-3 sm:bottom-[40px] left-3 sm:left-[40px] border-b border-l",
+            "bottom-3 sm:bottom-[40px] right-3 sm:right-[40px] border-b border-r",
+          ].map((cls) => (
+            <div key={cls} className={`absolute w-5 h-5 sm:w-6 sm:h-6 border-white/20 pointer-events-none ${cls}`} style={{ zIndex: 5 }} />
           ))}
 
           {/* UNCLASSIFIED 배지 */}
@@ -422,23 +427,23 @@ export default function WasperDetailClient() {
             <div
               key={ov.id}
               ref={el => { overlayRefs.current[i] = el; }}
-              className={`absolute top-1/2 -translate-y-1/2 pointer-events-none max-w-xs ${
-                ov.side === "right" ? "right-[40px] text-right" : "left-[40px] text-left"
+              className={`absolute top-1/2 -translate-y-1/2 pointer-events-none max-w-[180px] sm:max-w-xs ${
+                ov.side === "right" ? "right-3 sm:right-[40px] text-right" : "left-3 sm:left-[40px] text-left"
               }`}
               style={{ zIndex: 6, opacity: 0 }}
             >
               {/* 라벨 */}
-              <p data-tw data-original={ov.label} className="text-white text-[9px] tracking-[0.4em] font-mono uppercase mb-3">
+              <p data-tw data-original={ov.label} className="text-white text-[7px] sm:text-[9px] tracking-[0.4em] font-mono uppercase mb-2 sm:mb-3">
                 {ov.label}
               </p>
               {/* 구분선 */}
-              <div className={`w-8 h-px bg-white mb-4 ${ov.side === "right" ? "ml-auto" : ""}`} />
+              <div className={`w-6 sm:w-8 h-px bg-white mb-3 sm:mb-4 ${ov.side === "right" ? "ml-auto" : ""}`} />
               {/* 제목 */}
-              <h2 data-tw data-original={ov.title} className="text-white text-2xl sm:text-3xl font-medium tracking-tighter uppercase leading-tight mb-4 whitespace-pre-line">
+              <h2 data-tw data-original={ov.title} className="text-white text-lg sm:text-2xl lg:text-3xl font-medium tracking-tighter uppercase leading-tight mb-3 sm:mb-4 whitespace-pre-line">
                 {ov.title}
               </h2>
               {/* 본문 */}
-              <p data-tw data-original={ov.body} data-tw-body className="text-white text-sm leading-relaxed">
+              <p data-tw data-original={ov.body} data-tw-body className="text-white text-xs sm:text-sm leading-relaxed hidden sm:block">
                 {ov.body}
               </p>
             </div>
@@ -447,13 +452,13 @@ export default function WasperDetailClient() {
           {/* 히어로 텍스트 */}
           <motion.div
             style={{ opacity: textOpacity, y: textY, zIndex: 5 }}
-            className="absolute top-1/2 -translate-y-1/2 left-[40px]"
+            className="absolute top-1/2 -translate-y-1/2 left-3 sm:left-[40px]"
           >
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-white text-lg font-medium uppercase leading-none mb-1"
+              className="text-white text-sm sm:text-lg font-medium uppercase leading-none mb-1"
             >
               ATA SYSTEM
             </motion.p>
@@ -461,7 +466,7 @@ export default function WasperDetailClient() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.45 }}
-              className="text-[6.75rem] sm:text-[90px] lg:text-[13.5rem] font-medium tracking-tighter text-white uppercase leading-none"
+              className="text-[2.75rem] sm:text-[4.5rem] lg:text-[6.75rem] xl:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none"
             >
               WASPER-1
             </motion.h1>
@@ -486,10 +491,10 @@ export default function WasperDetailClient() {
       </div>
 
       {/* ── 3D 뷰어 섹션 ─────────────────────────────────────────────── */}
-      <section className="bg-black px-10 py-20">
+      <section className="bg-black px-4 sm:px-10 py-12 sm:py-20">
         <div
           className="relative w-full overflow-hidden border border-white/[0.06]"
-          style={{ height: "clamp(640px, 100vw, 1200px)" }}
+          style={{ height: "clamp(320px, 100vw, 1200px)" }}
         >
           {/* 코너 브래킷 */}
           {["top-3 left-3 border-t border-l","top-3 right-3 border-t border-r","bottom-3 left-3 border-b border-l","bottom-3 right-3 border-b border-r"].map((cls) => (
@@ -509,27 +514,27 @@ export default function WasperDetailClient() {
       </section>
 
       {/* ── 영상 이후: 스펙 + 기능 섹션 ─────────────────────────────── */}
-      <section className="bg-black py-28 sm:py-36 px-10">
+      <section className="bg-black py-16 sm:py-28 lg:py-36 px-4 sm:px-10">
 
         {/* 타이틀 */}
-        <div className="mb-[250px]">
-          <p className="text-lg font-medium text-white uppercase leading-none mb-1">
+        <div className="mb-16 sm:mb-[250px]">
+          <p className="text-sm sm:text-lg font-medium text-white uppercase leading-none mb-1">
             ATA SYSTEM
           </p>
-          <div className="flex items-baseline gap-8">
-            <h2 className="text-[6.75rem] sm:text-[90px] lg:text-[13.5rem] font-medium tracking-tighter text-white uppercase leading-none whitespace-nowrap">
+          <div className="flex items-baseline gap-4 sm:gap-8 flex-wrap">
+            <h2 className="text-[2.75rem] sm:text-[4.5rem] lg:text-[6.75rem] xl:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none">
               WASPER-1
             </h2>
           </div>
         </div>
 
-        {/* 5행 2열: 스펙(좌) + 기능(우) */}
+        {/* 5행: 모바일 1열, sm 이상 2열 */}
         {features.map((f, i) => (
           <div
             key={f.title}
-            className="grid grid-cols-2 gap-x-8 py-6"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 py-4 sm:py-6"
           >
-            {/* 왼쪽: 스펙 (4개까지만) */}
+            {/* 스펙 (4개까지만) */}
             <div>
               {stats[i] ? (
                 <StatCounter
@@ -541,12 +546,12 @@ export default function WasperDetailClient() {
               ) : null}
             </div>
 
-            {/* 오른쪽: 기능 */}
+            {/* 기능 */}
             <div>
-              <h4 className="text-white text-[15px] font-medium uppercase tracking-widest mb-2">
+              <h4 className="text-white text-[13px] sm:text-[15px] font-medium uppercase tracking-widest mb-2">
                 {String(i + 1).padStart(2, "0")}. {f.title}
               </h4>
-              <p className="text-white text-lg leading-relaxed">{f.body}</p>
+              <p className="text-white text-base sm:text-lg leading-relaxed">{f.body}</p>
             </div>
           </div>
         ))}
