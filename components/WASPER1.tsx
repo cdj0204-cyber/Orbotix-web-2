@@ -43,7 +43,7 @@ export default function WASPER1() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="wasper-1" className="relative py-16 sm:py-28 lg:py-36 bg-white/[0.015]">
+    <section id="wasper-1" className="relative py-16 sm:py-28 lg:py-36 bg-black">
       <div ref={ref} className="px-4 sm:px-10">
         <motion.p
           initial={{ opacity: 0, y: 20 }}

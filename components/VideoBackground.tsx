@@ -3,24 +3,22 @@
 import { useEffect, useRef, useState, memo } from "react";
 
 const VideoBackground = memo(function VideoBackground() {
-  const videoRef    = useRef<HTMLVideoElement>(null);
-  const [ready, setReady] = useState(false);   // 비디오 재생 가능 여부
-  const [inView, setInView] = useState(true);  // Hero 섹션 가시성
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [ready, setReady] = useState(false);  // 비디오 재생 가능 여부
+  const [inView, setInView] = useState(true); // Hero 섹션 가시성
 
   // ── 비디오 로드 완료 감지 ────────────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // 이미 준비됐으면 즉시 처리
     if (video.readyState >= 3) { setReady(true); return; }
 
     const onReady = () => setReady(true);
     video.addEventListener("canplay", onReady, { once: true });
     video.addEventListener("canplaythrough", onReady, { once: true });
 
-    // webm을 지원하지 않는 iOS Safari 등에서는 이벤트가 발생하지 않으므로
-    // 5초 후 fallback → 정적 이미지(poster)가 그대로 노출됨
+    // webm 미지원(iOS Safari 등)은 이벤트 미발생 → 5초 후 fallback
     const fallback = setTimeout(() => setReady(true), 5000);
 
     return () => {
@@ -52,29 +50,13 @@ const VideoBackground = memo(function VideoBackground() {
 
   return (
     <>
-      {/* ── 레이어 1: 정적 blur 이미지 ─────────────────────────────
-          · 항상 표시 → iOS Safari (webm 미지원) 자동 폴백
-          · 비디오가 재생되면 위 레이어에 의해 가려짐              */}
+      {/* 비디오 로드 전 / 재생 불가 시 검정 배경 (body bg-black과 동일) */}
       <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          backgroundImage: "url('/image/Blur.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          zIndex: 10,
-        }}
+        className="fixed inset-0 pointer-events-none bg-black"
+        style={{ zIndex: 10 }}
       />
 
-      {/* ── 레이어 2: 다크 오버레이 ────────────────────────────────── */}
-      <div
-        className="fixed inset-0 pointer-events-none bg-black/50"
-        style={{ zIndex: 11 }}
-      />
-
-      {/* ── 레이어 3: 배경 비디오 (모든 디바이스) ──────────────────
-          · muted + playsInline + autoPlay: 모바일 자동재생 필수
-          · poster: 비디오 로드 전 또는 재생 불가 시 정적 이미지
-          · opacity: 재생 준비 완료 후 페이드인               */}
+      {/* 배경 비디오 (모든 디바이스) — muted + playsInline + autoPlay 필수 */}
       <video
         ref={videoRef}
         autoPlay
@@ -82,10 +64,9 @@ const VideoBackground = memo(function VideoBackground() {
         muted
         playsInline
         preload="auto"
-        poster="/image/Blur.png"
         className="fixed inset-0 w-full h-full object-cover pointer-events-none"
         style={{
-          zIndex: 12,
+          zIndex: 11,
           opacity: ready && inView ? 1 : 0,
           transition: "opacity 1s ease",
           willChange: "opacity",
@@ -94,6 +75,12 @@ const VideoBackground = memo(function VideoBackground() {
       >
         <source src="/video/Main%20page/main%20video_1_webm.webm" type="video/webm" />
       </video>
+
+      {/* 다크 오버레이 */}
+      <div
+        className="fixed inset-0 pointer-events-none bg-black/50"
+        style={{ zIndex: 12 }}
+      />
     </>
   );
 });
