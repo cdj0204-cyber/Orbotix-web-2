@@ -210,6 +210,7 @@ export default function WasperDetailClient() {
   const prevOpacityRef  = useRef<number[]>(OVERLAYS.map(() => 0));
   const blobUrlRef      = useRef<string | null>(null);
   const isAnimatingRef  = useRef(false);
+  const playRateRef     = useRef(0);      // 현재 실제 재생 속도 (lerp 대상)
 
   const [loadProgress, setLoadProgress] = useState(0);   // 0 ~ 100
   const [loadDone, setLoadDone]         = useState(false); // 전체 다운 완료
@@ -289,26 +290,35 @@ export default function WasperDetailClient() {
     const tick = () => {
       if (!video.duration) { isAnimatingRef.current = false; return; }
 
-      const diff    = targetTimeRef.current - video.currentTime;
-      const absDiff = Math.abs(diff);
+      const diff       = targetTimeRef.current - video.currentTime;
+      const absDiff    = Math.abs(diff);
 
-      // 목표 도달 → 정지
-      if (absDiff <= 0.016) {
-        video.pause();
+      // 목표 속도: 남은 거리에 비례
+      const targetRate = diff > 0 ? Math.min(4, absDiff * 8) : 0;
+
+      // playbackRate 자체를 lerp
+      // · 가속(올라갈 때): 빠르게(0.2) → 스크롤에 즉시 반응
+      // · 감속(내려갈 때): 천천히(0.06) → 부드러운 감속 곡선
+      const lerp = targetRate > playRateRef.current ? 0.2 : 0.06;
+      playRateRef.current += (targetRate - playRateRef.current) * lerp;
+
+      // 속도가 충분히 낮으면 정지
+      if (playRateRef.current < 0.015) {
+        if (!video.paused) video.pause();
+        playRateRef.current = 0;
         isAnimatingRef.current = false;
         return;
       }
 
-      if (diff > 0) {
-        // 앞으로: 거리에 비례한 배속으로 자연 재생
-        // 멀수록 빠르게, 가까울수록 자동 감속 (0.08x → 16x)
-        const rate = Math.min(16, Math.max(0.08, absDiff * 8));
-        video.playbackRate = rate;
+      if (diff >= 0) {
+        // 앞으로: lerp된 rate로 재생
+        video.playbackRate = playRateRef.current;
         if (video.paused) video.play().catch(() => {});
       } else {
         // 뒤로: seek
         video.pause();
         if (!video.seeking) video.currentTime = Math.max(0, targetTimeRef.current);
+        playRateRef.current = 0;
       }
 
       rafRef.current = requestAnimationFrame(tick);
