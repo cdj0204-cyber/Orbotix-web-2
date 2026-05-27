@@ -228,7 +228,7 @@ export default function WasperDetailClient() {
         const res = await fetch("/video/Wasper/Wasper%20detail.mp4");
         const total = Number(res.headers.get("Content-Length")) || 0;
         const reader = res.body!.getReader();
-        const chunks: Uint8Array[] = [];
+        const chunks: Uint8Array<ArrayBuffer>[] = [];
         let received = 0;
 
         while (true) {
