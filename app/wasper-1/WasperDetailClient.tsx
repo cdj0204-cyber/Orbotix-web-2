@@ -201,7 +201,7 @@ function StatCounter({ num, unit, decimals, label }: {
   );
 }
 
-const FRAME_COUNT = 160; // 추출된 WebP 프레임 수
+const FRAME_COUNT = 159; // 추출된 JPEG 프레임 수
 
 export default function WasperDetailClient() {
   const containerRef   = useRef<HTMLDivElement>(null);
@@ -209,7 +209,7 @@ export default function WasperDetailClient() {
   const imgBRef        = useRef<HTMLImageElement>(null);
   const framePathsRef  = useRef<string[]>(
     Array.from({ length: FRAME_COUNT }, (_, i) =>
-      `/video/Wasper/frames/frame_${String(i + 1).padStart(3, "0")}.webp`
+      `/video/Wasper/frames/frame_${String(i + 1).padStart(3, "0")}.jpg`
     )
   );
   const imageStore     = useRef<HTMLImageElement[]>([]); // GC 방지용 참조 보관
@@ -385,7 +385,7 @@ export default function WasperDetailClient() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={imgARef}
-              src="/video/Wasper/frames/frame_001.webp"
+              src="/video/Wasper/frames/frame_001.jpg"
               alt=""
               style={{
                 position: "absolute",
@@ -400,7 +400,7 @@ export default function WasperDetailClient() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={imgBRef}
-              src="/video/Wasper/frames/frame_001.webp"
+              src="/video/Wasper/frames/frame_001.jpg"
               alt=""
               style={{
                 position: "absolute",
