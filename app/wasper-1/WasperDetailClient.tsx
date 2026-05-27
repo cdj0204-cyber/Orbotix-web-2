@@ -210,7 +210,6 @@ export default function WasperDetailClient() {
   const prevOpacityRef  = useRef<number[]>(OVERLAYS.map(() => 0));
   const blobUrlRef      = useRef<string | null>(null);
   const isAnimatingRef  = useRef(false);
-  const playRateRef     = useRef(0);      // 현재 실제 재생 속도 (lerp 대상)
 
   const [loadProgress, setLoadProgress] = useState(0);   // 0 ~ 100
   const [loadDone, setLoadDone]         = useState(false); // 전체 다운 완료
@@ -286,11 +285,12 @@ export default function WasperDetailClient() {
     };
   }, []);
 
-  // ── RAF: playbackRate 기반 스무스 재생 ─────────────────────────────
-  // · seek 대신 play() + playbackRate 제어 → 브라우저 네이티브 디코딩
-  //   → 키프레임 디코딩 없이 자연스러운 프레임 연결
-  // · diff(남은 거리)에 비례해 속도 조절 → 가까울수록 자동 감속
-  // · 역방향일 때만 seek 사용 (브라우저가 역재생 미지원)
+  // ── RAF: H.264 seek 기반 스크롤 동기화 ──────────────────────────────
+  // · playbackRate + play() 방식은 노트북에서 자동재생 정책으로 조용히 실패
+  // · seek 방식으로 복귀 + MP4(H.264 하드웨어 디코딩) 조합
+  //   → 하드웨어 가속으로 VP9 때의 끊김 없이 모든 기기에서 안정 동작
+  // · diff * lerp: 멀수록 큰 스텝 → 스크롤 추적
+  //               가까울수록 작은 스텝 → 자연스러운 감속 정지
   const startRAF = () => {
     if (isAnimatingRef.current) return;
     isAnimatingRef.current = true;
@@ -300,35 +300,19 @@ export default function WasperDetailClient() {
     const tick = () => {
       if (!video.duration) { isAnimatingRef.current = false; return; }
 
-      const diff       = targetTimeRef.current - video.currentTime;
-      const absDiff    = Math.abs(diff);
+      const diff    = targetTimeRef.current - video.currentTime;
+      const absDiff = Math.abs(diff);
 
-      // 목표 속도: 남은 거리에 비례
-      const targetRate = diff > 0 ? Math.min(4, absDiff * 8) : 0;
-
-      // playbackRate 자체를 lerp
-      // · 가속(올라갈 때): 빠르게(0.2) → 스크롤에 즉시 반응
-      // · 감속(내려갈 때): 천천히(0.06) → 부드러운 감속 곡선
-      const lerp = targetRate > playRateRef.current ? 0.2 : 0.06;
-      playRateRef.current += (targetRate - playRateRef.current) * lerp;
-
-      // 속도가 충분히 낮으면 정지
-      if (playRateRef.current < 0.015) {
-        if (!video.paused) video.pause();
-        playRateRef.current = 0;
+      // 1프레임(0.016s) 이내 수렴 → 종료 (스냅 없음)
+      if (absDiff <= 0.016) {
         isAnimatingRef.current = false;
         return;
       }
 
-      if (diff >= 0) {
-        // 앞으로: lerp된 rate로 재생
-        video.playbackRate = playRateRef.current;
-        if (video.paused) video.play().catch(() => {});
-      } else {
-        // 뒤로: seek
-        video.pause();
-        if (!video.seeking) video.currentTime = Math.max(0, targetTimeRef.current);
-        playRateRef.current = 0;
+      // seeking 완료 상태일 때만 업데이트 → 디코딩 과부하 방지
+      if (!video.seeking && video.readyState >= 2) {
+        // 감속 lerp: 스크롤 추적 + 멈출 때 자연스러운 감속
+        video.currentTime += diff * 0.12;
       }
 
       rafRef.current = requestAnimationFrame(tick);
