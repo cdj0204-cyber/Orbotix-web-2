@@ -206,7 +206,6 @@ const FRAME_COUNT = 159; // 추출된 JPEG 프레임 수
 export default function WasperDetailClient() {
   const containerRef   = useRef<HTMLDivElement>(null);
   const imgARef        = useRef<HTMLImageElement>(null);
-  const imgBRef        = useRef<HTMLImageElement>(null);
   const framePathsRef  = useRef<string[]>(
     Array.from({ length: FRAME_COUNT }, (_, i) =>
       `/video/Wasper/frames/frame_${String(i + 1).padStart(3, "0")}.jpg`
@@ -227,22 +226,15 @@ export default function WasperDetailClient() {
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
-  // ── <img> 태그로 프레임 표시 (CSS background-image 제거) ──────────
-  // readyRef 게이트 없음 — refs 유효성만 체크
+  // ── 프레임 표시: 블렌딩 없이 가장 가까운 프레임으로 스냅 ──────────
+  // lerp가 progress를 부드럽게 이동시키므로 Round만으로도 충분히 매끄럽고
+  // 두 프레임 겹침(잔상)이 완전히 사라짐
   const drawFrame = (progress: number) => {
     const paths = framePathsRef.current;
     const imgA  = imgARef.current;
-    const imgB  = imgBRef.current;
-    if (!imgA || !imgB || paths.length === 0) return;
-
-    const exact = progress * (FRAME_COUNT - 1);
-    const idxA  = Math.floor(exact);
-    const idxB  = Math.min(FRAME_COUNT - 1, idxA + 1);
-    const blend = exact - idxA;
-
-    imgA.src = paths[idxA];
-    imgB.src = paths[idxB];
-    imgB.style.opacity = String(blend > 0.01 ? blend : 0);
+    if (!imgA || paths.length === 0) return;
+    const idx = Math.round(progress * (FRAME_COUNT - 1));
+    imgA.src = paths[idx];
   };
 
   // ── 이미지 시퀀스 프리로드 (브라우저 캐시 워밍 + GC 방지) ─────────
@@ -288,7 +280,7 @@ export default function WasperDetailClient() {
     const tick = () => {
       const diff = targetProg.current - progressRef.current;
       if (Math.abs(diff) > 0.0005) {
-        progressRef.current += diff * 0.12;
+        progressRef.current += diff * 0.18;
       }
       drawFrame(progressRef.current); // 항상 렌더 (초기 0 포함)
       rafRef.current = requestAnimationFrame(tick);
@@ -380,40 +372,23 @@ export default function WasperDetailClient() {
       <div ref={containerRef} style={{ height: `calc(100vh + ${SCROLL_TOTAL}px)` }}>
         <div className="sticky top-0 h-screen overflow-hidden" style={{ zIndex: 0 }}>
 
-          {/* 이미지 시퀀스 렌더링 — <img> 태그 직접 사용 */}
-          <div className="absolute inset-0" style={{ zIndex: 1, overflow: "hidden" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgARef}
-              src="/video/Wasper/frames/frame_001.jpg"
-              alt=""
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center",
-                display: "block",
-              }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgBRef}
-              src="/video/Wasper/frames/frame_001.jpg"
-              alt=""
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center",
-                display: "block",
-                opacity: 0,
-              }}
-            />
-          </div>
+          {/* 이미지 시퀀스 렌더링 — 단일 <img>, 블렌딩 없음 (잔상 제거) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={imgARef}
+            src="/video/Wasper/frames/frame_001.jpg"
+            alt=""
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center",
+              display: "block",
+              zIndex: 1,
+            }}
+          />
 
           {/* 하단 그라데이션 */}
           <div
