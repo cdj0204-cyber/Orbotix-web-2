@@ -210,6 +210,7 @@ export default function WasperDetailClient() {
   const prevOpacityRef  = useRef<number[]>(OVERLAYS.map(() => 0));
   const blobUrlRef      = useRef<string | null>(null);
   const isAnimatingRef  = useRef(false);
+  const lastSeekAt      = useRef(0);          // 마지막 seek 시각 (ms)
 
   const [loadProgress, setLoadProgress] = useState(0);   // 0 ~ 100
   const [loadDone, setLoadDone]         = useState(false); // 전체 다운 완료
@@ -225,7 +226,7 @@ export default function WasperDetailClient() {
 
     async function preload() {
       try {
-        const res = await fetch("/video/Wasper/Wasper%20detail.mp4");
+        const res = await fetch("/video/Wasper/Wasper%20detail.webm");
         const total = Number(res.headers.get("Content-Length")) || 0;
         const reader = res.body!.getReader();
         const chunks: Uint8Array<ArrayBuffer>[] = [];
@@ -242,7 +243,7 @@ export default function WasperDetailClient() {
 
         if (cancelled) return;
 
-        const blob = new Blob(chunks, { type: "video/mp4" });
+        const blob = new Blob(chunks, { type: "video/webm" });
         const url  = URL.createObjectURL(blob);
         blobUrlRef.current = url;
 
@@ -275,23 +276,41 @@ export default function WasperDetailClient() {
     };
   }, []);
 
-  // ── RAF: 스크롤 시작 시에만 켜지고, 목표 도달 시 자동으로 꺼짐 ──
-  // → 유휴 상태에서 60fps seek 없음, 감속 느낌은 그대로 유지
+  // ── RAF: 저사양 최적화 버전 ───────────────────────────────────────
+  // · seek 빈도를 ~24fps(42ms)로 제한 → CPU 디코딩 부하 감소
+  // · readyState + seeking 체크 → 이전 seek 완료 전 중복 seek 방지
+  // · threshold 0.05s → 수렴까지 필요한 seek 횟수 대폭 감소
+  // · diff * 0.12 lerp 유지 → 감속 정지감 보존
   const startRAF = () => {
     if (isAnimatingRef.current) return;
     isAnimatingRef.current = true;
     const video = videoRef.current;
-    const tick = () => {
+
+    const tick = (now: DOMHighResTimeStamp) => {
       if (!video || !video.duration) { isAnimatingRef.current = false; return; }
+
       const diff = targetTimeRef.current - video.currentTime;
-      if (Math.abs(diff) > 0.018) {
-        video.currentTime = video.currentTime + diff * 0.1; // 감속 lerp 유지
-        rafRef.current = requestAnimationFrame(tick);       // 목표 미도달 → 계속
-      } else {
-        if (Math.abs(diff) > 0.001) video.currentTime = targetTimeRef.current; // 정확히 스냅
-        isAnimatingRef.current = false;                     // 도달 → RAF 종료
+
+      // 수렴 판정: 0.05s 이내면 스냅 후 종료
+      if (Math.abs(diff) <= 0.05) {
+        if (Math.abs(diff) > 0.005) video.currentTime = targetTimeRef.current;
+        isAnimatingRef.current = false;
+        return;
       }
+
+      // ~24fps 쓰로틀 + 영상이 seek 처리 가능한 상태일 때만 seek
+      if (
+        now - lastSeekAt.current >= 42 &&
+        video.readyState >= 2 &&
+        !video.seeking
+      ) {
+        video.currentTime += diff * 0.12; // 감속 lerp 유지
+        lastSeekAt.current = now;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
     };
+
     rafRef.current = requestAnimationFrame(tick);
   };
 
