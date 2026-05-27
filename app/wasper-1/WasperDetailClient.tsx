@@ -221,6 +221,7 @@ export default function WasperDetailClient() {
   // swap crossfade 상태
   const frontRef       = useRef<'a' | 'b'>('a'); // 현재 전면 이미지
   const prevIdxRef     = useRef(-1);              // 마지막으로 표시한 프레임 인덱스
+  const lastSwapRef    = useRef(0);               // 마지막 swap 시각 (ms)
 
   const [loadProgress, setLoadProgress] = useState(0);
   const [loadDone, setLoadDone]         = useState(false);
@@ -230,11 +231,11 @@ export default function WasperDetailClient() {
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
-  // ── 즉시 swap (CSS transition 없음) ─────────────────────────────────
-  // · 잔상 zero: 항상 하나의 img만 opacity 1
-  // · CSS transition을 쓰면 느린 스크롤·감속 구간마다 GPU composite 발생
-  //   → 노트북에서 과부하. transition 없이 즉시 swap하면 GPU 부하 최소화
-  // · 부드러운 정지감은 아래 lerp 0.12가 담당 (CSS가 아닌 JS 감속)
+  // ── swap crossfade: 잔상 없이 부드럽게 ─────────────────────────────
+  // · 한 번에 정확히 하나의 프레임만 불투명(opacity 1) → 잔상 zero
+  // · 프레임이 바뀔 때만 swap; 빠른 스크롤엔 즉시(transition 없이) 전환
+  const CROSSFADE_MS = 40;
+
   const drawFrame = (progress: number) => {
     const paths = framePathsRef.current;
     const imgA  = imgARef.current;
@@ -245,13 +246,22 @@ export default function WasperDetailClient() {
     if (idx === prevIdxRef.current) return; // 프레임 변화 없음 → skip
     prevIdxRef.current = idx;
 
+    const now     = performance.now();
+    const isRapid = (now - lastSwapRef.current) < CROSSFADE_MS;
+    lastSwapRef.current = now;
+    const trans   = isRapid ? 'none' : `opacity ${CROSSFADE_MS}ms ease`;
+
     if (frontRef.current === 'a') {
       imgB.src = paths[idx];
+      imgA.style.transition = trans;
+      imgB.style.transition = trans;
       imgA.style.opacity = '0';
       imgB.style.opacity = '1';
       frontRef.current = 'b';
     } else {
       imgA.src = paths[idx];
+      imgA.style.transition = trans;
+      imgB.style.transition = trans;
       imgA.style.opacity = '1';
       imgB.style.opacity = '0';
       frontRef.current = 'a';
