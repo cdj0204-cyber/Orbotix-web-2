@@ -205,8 +205,13 @@ const FRAME_COUNT = 160; // 추출된 WebP 프레임 수
 
 export default function WasperDetailClient() {
   const containerRef   = useRef<HTMLDivElement>(null);
-  const canvasRef      = useRef<HTMLCanvasElement>(null);
-  const framesRef      = useRef<HTMLImageElement[]>([]);
+  const bgARef         = useRef<HTMLDivElement>(null);
+  const bgBRef         = useRef<HTMLDivElement>(null);
+  const framePathsRef  = useRef<string[]>(
+    Array.from({ length: FRAME_COUNT }, (_, i) =>
+      `/video/Wasper/frames/frame_${String(i + 1).padStart(3, "0")}.webp`
+    )
+  );
   const overlayRefs    = useRef<(HTMLDivElement | null)[]>([]);
   const prevOpacityRef = useRef<number[]>(OVERLAYS.map(() => 0));
   const progressRef    = useRef(0);   // 현재 표시 중인 progress (lerp 대상)
@@ -222,87 +227,51 @@ export default function WasperDetailClient() {
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
-  // ── Canvas에 프레임 그리기 (인접 프레임 블렌딩) ──────────────────
+  // ── CSS backgroundImage로 프레임 표시 (canvas 완전 제거) ──────────
   const drawFrame = (progress: number) => {
-    const canvas = canvasRef.current;
-    const frames = framesRef.current;
-    if (!canvas || frames.length === 0) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!readyRef.current) return;
+    const paths = framePathsRef.current;
+    const divA  = bgARef.current;
+    const divB  = bgBRef.current;
+    if (!divA || !divB) return;
 
-    const exact  = progress * (FRAME_COUNT - 1);
-    const idxA   = Math.floor(exact);
-    const idxB   = Math.min(FRAME_COUNT - 1, idxA + 1);
-    const blend  = exact - idxA;
-    const imgA   = frames[idxA];
-    const imgB   = frames[idxB];
-    if (!imgA?.complete || !imgA.naturalWidth) return;
+    const exact = progress * (FRAME_COUNT - 1);
+    const idxA  = Math.floor(exact);
+    const idxB  = Math.min(FRAME_COUNT - 1, idxA + 1);
+    const blend = exact - idxA;
 
-    // object-fit: cover 계산
-    const cW = canvas.width, cH = canvas.height;
-    const iW = imgA.naturalWidth, iH = imgA.naturalHeight;
-    const scale = Math.max(cW / iW, cH / iH);
-    const dW = iW * scale, dH = iH * scale;
-    const dx = (cW - dW) / 2, dy = (cH - dH) / 2;
-
-    ctx.clearRect(0, 0, cW, cH);
-    ctx.globalAlpha = 1;
-    ctx.drawImage(imgA, dx, dy, dW, dH);
-    if (blend > 0.01 && imgB?.complete && imgB.naturalWidth) {
-      ctx.globalAlpha = blend;
-      ctx.drawImage(imgB, dx, dy, dW, dH);
-      ctx.globalAlpha = 1;
-    }
+    divA.style.backgroundImage = `url('${paths[idxA]}')`;
+    divB.style.backgroundImage = `url('${paths[idxB]}')`;
+    divB.style.opacity = String(blend > 0.01 ? blend : 0);
   };
 
-  // ── 이미지 시퀀스 프리로드 ────────────────────────────────────────
+  // ── 이미지 시퀀스 프리로드 (브라우저 캐시 워밍) ──────────────────
   useEffect(() => {
     let cancelled = false;
     let loaded = 0;
-    const frames: HTMLImageElement[] = [];
+    const paths = framePathsRef.current;
 
     const onOne = () => {
       if (cancelled) return;
       loaded++;
       setLoadProgress(Math.round((loaded / FRAME_COUNT) * 100));
       if (loaded === FRAME_COUNT) {
-        framesRef.current = frames;
-        readyRef.current  = true;
+        readyRef.current = true;
         drawFrame(0);      // 첫 프레임 즉시 표시
         setFadeOut(true);
         setTimeout(() => setLoadDone(true), 800);
       }
     };
 
-    for (let i = 1; i <= FRAME_COUNT; i++) {
+    for (let i = 0; i < FRAME_COUNT; i++) {
       const img = new Image();
       img.onload  = onOne;
       img.onerror = onOne; // 오류나도 카운트
-      img.src = `/video/Wasper/frames/frame_${String(i).padStart(3, "0")}.webp`;
-      frames.push(img);
+      img.src = paths[i];
     }
 
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── Canvas 리사이즈 처리 ──────────────────────────────────────────
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const sync = () => {
-      // offsetWidth/Height 대신 window 치수 사용 → 마운트 직후에도 신뢰성 보장
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      if (w > 0 && h > 0) {
-        canvas.width  = w;
-        canvas.height = h;
-      }
-    };
-    const ro = new ResizeObserver(sync);
-    ro.observe(canvas);
-    sync();
-    return () => ro.disconnect();
   }, []);
 
   // ── RAF: progress lerp → Canvas 렌더 ─────────────────────────────
@@ -405,12 +374,28 @@ export default function WasperDetailClient() {
       <div ref={containerRef} style={{ height: `calc(100vh + ${SCROLL_TOTAL}px)` }}>
         <div className="sticky top-0 h-screen overflow-hidden" style={{ zIndex: 0 }}>
 
-          {/* Canvas — 이미지 시퀀스 렌더링 (video.currentTime seek 완전 제거) */}
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
-            style={{ zIndex: 1 }}
-          />
+          {/* 이미지 시퀀스 렌더링 — CSS backgroundImage (canvas 제거) */}
+          <div className="absolute inset-0" style={{ zIndex: 1 }}>
+            <div
+              ref={bgARef}
+              className="absolute inset-0"
+              style={{
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            />
+            <div
+              ref={bgBRef}
+              className="absolute inset-0"
+              style={{
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+                opacity: 0,
+              }}
+            />
+          </div>
 
           {/* 하단 그라데이션 */}
           <div
