@@ -210,7 +210,6 @@ export default function WasperDetailClient() {
   const prevOpacityRef  = useRef<number[]>(OVERLAYS.map(() => 0));
   const blobUrlRef      = useRef<string | null>(null);
   const isAnimatingRef  = useRef(false);
-  const lastSeekAt      = useRef(0);          // 마지막 seek 시각 (ms)
 
   const [loadProgress, setLoadProgress] = useState(0);   // 0 ~ 100
   const [loadDone, setLoadDone]         = useState(false); // 전체 다운 완료
@@ -276,36 +275,40 @@ export default function WasperDetailClient() {
     };
   }, []);
 
-  // ── RAF: 저사양 최적화 버전 ───────────────────────────────────────
-  // · seek 빈도를 ~24fps(42ms)로 제한 → CPU 디코딩 부하 감소
-  // · readyState + seeking 체크 → 이전 seek 완료 전 중복 seek 방지
-  // · threshold 0.05s → 수렴까지 필요한 seek 횟수 대폭 감소
-  // · diff * 0.12 lerp 유지 → 감속 정지감 보존
+  // ── RAF: playbackRate 기반 스무스 재생 ─────────────────────────────
+  // · seek 대신 play() + playbackRate 제어 → 브라우저 네이티브 디코딩
+  //   → 키프레임 디코딩 없이 자연스러운 프레임 연결
+  // · diff(남은 거리)에 비례해 속도 조절 → 가까울수록 자동 감속
+  // · 역방향일 때만 seek 사용 (브라우저가 역재생 미지원)
   const startRAF = () => {
     if (isAnimatingRef.current) return;
     isAnimatingRef.current = true;
     const video = videoRef.current;
+    if (!video) { isAnimatingRef.current = false; return; }
 
-    const tick = (now: DOMHighResTimeStamp) => {
-      if (!video || !video.duration) { isAnimatingRef.current = false; return; }
+    const tick = () => {
+      if (!video.duration) { isAnimatingRef.current = false; return; }
 
-      const diff = targetTimeRef.current - video.currentTime;
+      const diff    = targetTimeRef.current - video.currentTime;
+      const absDiff = Math.abs(diff);
 
-      // 수렴 판정: 0.05s 이내면 스냅 후 종료
-      if (Math.abs(diff) <= 0.05) {
-        if (Math.abs(diff) > 0.005) video.currentTime = targetTimeRef.current;
+      // 목표 도달 → 정지
+      if (absDiff <= 0.016) {
+        video.pause();
         isAnimatingRef.current = false;
         return;
       }
 
-      // ~24fps 쓰로틀 + 영상이 seek 처리 가능한 상태일 때만 seek
-      if (
-        now - lastSeekAt.current >= 42 &&
-        video.readyState >= 2 &&
-        !video.seeking
-      ) {
-        video.currentTime += diff * 0.12; // 감속 lerp 유지
-        lastSeekAt.current = now;
+      if (diff > 0) {
+        // 앞으로: 거리에 비례한 배속으로 자연 재생
+        // 멀수록 빠르게, 가까울수록 자동 감속 (0.08x → 16x)
+        const rate = Math.min(16, Math.max(0.08, absDiff * 8));
+        video.playbackRate = rate;
+        if (video.paused) video.play().catch(() => {});
+      } else {
+        // 뒤로: seek
+        video.pause();
+        if (!video.seeking) video.currentTime = Math.max(0, targetTimeRef.current);
       }
 
       rafRef.current = requestAnimationFrame(tick);
