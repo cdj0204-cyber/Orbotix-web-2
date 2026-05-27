@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* 핫스팟 소나 파동용 keyframe (인라인 animation 스타일에서 참조) */
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
 :root {
   --background: #000000;
   --foreground: #ffffff;
