@@ -291,28 +291,31 @@ export default function WasperDetailClient() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const sync = () => {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      if (readyRef.current) drawFrame(progressRef.current);
+      // offsetWidth/Height 대신 window 치수 사용 → 마운트 직후에도 신뢰성 보장
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (w > 0 && h > 0) {
+        canvas.width  = w;
+        canvas.height = h;
+      }
     };
     const ro = new ResizeObserver(sync);
     ro.observe(canvas);
     sync();
     return () => ro.disconnect();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── RAF: progress lerp → Canvas 렌더 ─────────────────────────────
-  // · video.currentTime seek 완전 제거 → CPU 디코딩 0
-  // · 이미지 drawImage는 GPU 가속, 어떤 기기에서도 부드럽게 동작
-  // · lerp(0.12)으로 스크롤 감속 정지감 유지
+  // · diff와 무관하게 매 프레임 drawFrame 호출
+  //   → progress=0(초기)일 때도 첫 프레임이 반드시 표시됨
+  // · drawFrame 내부에서 frames.length===0 체크 → 로딩 전엔 자동 skip
   useEffect(() => {
     const tick = () => {
       const diff = targetProg.current - progressRef.current;
-      if (Math.abs(diff) > 0.0001) {
+      if (Math.abs(diff) > 0.0005) {
         progressRef.current += diff * 0.12;
-        if (readyRef.current) drawFrame(progressRef.current);
       }
+      drawFrame(progressRef.current); // 항상 렌더 (초기 0 포함)
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
