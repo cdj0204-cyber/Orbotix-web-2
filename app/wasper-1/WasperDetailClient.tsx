@@ -221,12 +221,22 @@ export default function WasperDetailClient() {
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
   // ── 영상 전체 사전 다운로드 → Blob URL ─────────────────────────
+  // MP4(H.264): 하드웨어 디코딩 지원 기기 우선 (노트북 포함 대부분)
+  // WebM(VP9) : MP4 미지원 환경 폴백 (사실상 레거시 브라우저 전용)
   useEffect(() => {
     let cancelled = false;
 
     async function preload() {
       try {
-        const res = await fetch("/video/Wasper/Wasper%20detail.webm");
+        // 기기가 H.264 MP4 하드웨어 디코딩을 지원하면 MP4 우선 사용
+        const tmpVideo = document.createElement("video");
+        const canMP4   = tmpVideo.canPlayType('video/mp4; codecs="avc1.42E01E"') !== "";
+        const src      = canMP4
+          ? "/video/Wasper/Wasper%20detail.mp4"
+          : "/video/Wasper/Wasper%20detail.webm";
+        const mime     = canMP4 ? "video/mp4" : "video/webm";
+
+        const res = await fetch(src);
         const total = Number(res.headers.get("Content-Length")) || 0;
         const reader = res.body!.getReader();
         const chunks: Uint8Array<ArrayBuffer>[] = [];
@@ -243,7 +253,7 @@ export default function WasperDetailClient() {
 
         if (cancelled) return;
 
-        const blob = new Blob(chunks, { type: "video/webm" });
+        const blob = new Blob(chunks, { type: mime });
         const url  = URL.createObjectURL(blob);
         blobUrlRef.current = url;
 
