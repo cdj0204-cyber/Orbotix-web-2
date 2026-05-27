@@ -217,7 +217,6 @@ export default function WasperDetailClient() {
   const prevOpacityRef = useRef<number[]>(OVERLAYS.map(() => 0));
   const progressRef    = useRef(0);   // 현재 표시 중인 progress
   const targetProg     = useRef(0);   // 스크롤로 지정된 목표 progress
-  const velocityRef    = useRef(0);   // 스프링 감쇠용 속도
   const rafRef         = useRef(0);
   // swap crossfade 상태
   const frontRef       = useRef<'a' | 'b'>('a'); // 현재 전면 이미지
@@ -307,22 +306,18 @@ export default function WasperDetailClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── RAF: 스프링-감쇠 물리 → drawFrame ───────────────────────────
-  // · 순수 lerp 대신 velocity 를 따로 관리 → 스크롤 멈춰도 관성으로
-  //   자연스럽게 미끄러지며 정지 (아이폰 물리 스크롤과 같은 느낌)
-  // · DAMPING: 마찰 계수 (클수록 빨리 멈춤)
-  // · SPRING : 목표 인력 (클수록 빠르게 추종)
-  const DAMPING = 0.78;
-  const SPRING  = 0.12;
+  // ── RAF: lerp 감속 → drawFrame ───────────────────────────────────
+  // · lerp(progress, target, factor): 구조적으로 target을 절대 지나칠 수 없음
+  //   → 왔다갔다 oscillation 불가능
+  // · factor 0.12: 남은 거리의 12%씩 이동 → 자연스러운 exponential 감속
+  //   (60fps 기준 약 400ms에 걸쳐 부드럽게 정지)
+  const LERP = 0.12;
 
   useEffect(() => {
     const tick = () => {
       const diff = targetProg.current - progressRef.current;
-      // 속도 = 이전 속도 × 감쇠 + 목표 인력
-      velocityRef.current = velocityRef.current * DAMPING + diff * SPRING;
-      // 아주 작은 속도는 0으로 수렴 (무한 micro-update 방지)
-      if (Math.abs(velocityRef.current) > 0.000005) {
-        progressRef.current = Math.max(0, Math.min(1, progressRef.current + velocityRef.current));
+      if (Math.abs(diff) > 0.000001) {
+        progressRef.current += diff * LERP;
       }
       drawFrame(progressRef.current);
       rafRef.current = requestAnimationFrame(tick);
