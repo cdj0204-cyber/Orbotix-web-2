@@ -211,7 +211,7 @@ export default function WasperDetailClient() {
       `/video/Wasper/frames/frame_${String(i + 1).padStart(3, "0")}.jpg`
     )
   );
-  const imageStore     = useRef<HTMLImageElement[]>([]); // 프리로드 Image 객체 보관
+  const bitmapStore    = useRef<ImageBitmap[]>([]);      // GPU-ready 비트맵 보관
   const overlayRefs    = useRef<(HTMLDivElement | null)[]>([]);
   const prevOpacityRef = useRef<number[]>(OVERLAYS.map(() => 0));
   const progressRef    = useRef(0);
@@ -227,32 +227,31 @@ export default function WasperDetailClient() {
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
-  // ── canvas drawImage: 디코딩 제로, 즉시 렌더 ───────────────────────
-  // · imageStore.current[idx] = onload 완료 Image → 이미 디코딩됨
-  // · ctx.drawImage(img) = 메모리 복사만 → URL 재요청·재디코딩 없음
-  // · img.src = url 방식은 캐시 히트여도 JPEG 재디코딩 발생 → 랙 원인
+  // ── ImageBitmap → canvas drawImage ──────────────────────────────────
+  // · createImageBitmap(img, {resizeWidth:640, resizeHeight:360}) 으로
+  //   로딩 시점에 640×360 GPU 비트맵 생성 (전체 293MB ← 원본 1.17GB 대비 1/4)
+  // · 노트북 통합 그래픽 공유 VRAM(~1-2GB)에 1.17GB가 들어가면 evict 반복 → 랙
+  //   293MB는 VRAM에 완전히 상주 → GPU blit만 발생, 재업로드 없음
   const drawFrame = (progress: number) => {
-    const imgs   = imageStore.current;
-    const canvas = canvasRef.current;
-    if (!canvas || imgs.length === 0) return;
+    const bitmaps = bitmapStore.current;
+    const canvas  = canvasRef.current;
+    if (!canvas || bitmaps.length === 0) return;
 
     const idx = Math.round(progress * (FRAME_COUNT - 1));
     if (idx === prevIdxRef.current) return;
     prevIdxRef.current = idx;
 
-    const img = imgs[idx];
-    if (!img?.complete || !img.naturalWidth) return;
+    const bmp = bitmaps[idx];
+    if (!bmp) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // object-fit: cover 계산
+    // object-fit: cover 계산 (640×360 → 화면 크기)
     const cw = canvas.width, ch = canvas.height;
-    const iw = img.naturalWidth, ih = img.naturalHeight;
-    const scale = Math.max(cw / iw, ch / ih);
-    const dw = iw * scale, dh = ih * scale;
-    const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
-    ctx.drawImage(img, dx, dy, dw, dh);
+    const scale = Math.max(cw / bmp.width, ch / bmp.height);
+    const dw = bmp.width * scale, dh = bmp.height * scale;
+    ctx.drawImage(bmp, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
   };
 
   // ── canvas 크기 → 컨테이너에 맞춤 ──────────────────────────────────
@@ -272,37 +271,47 @@ export default function WasperDetailClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── 이미지 시퀀스 프리로드 (브라우저 캐시 워밍 + GC 방지) ─────────
+  // ── 프리로드: Image → createImageBitmap(640×360) → bitmapStore ──────
+  // · new Image() 로 JPEG 로드 (progress 추적) → onload 후 GPU 비트맵 생성
+  // · resizeWidth/Height 로 640×360 다운샘플 → VRAM 1/4 절약
+  // · Image 객체는 비트맵 생성 후 참조 제거 → GC 가능 (메모리 절약)
   useEffect(() => {
     let cancelled = false;
-    let loaded = 0;
+    let done = 0;
     const paths = framePathsRef.current;
-    const imgs: HTMLImageElement[] = [];
+    const bitmaps: ImageBitmap[] = new Array(FRAME_COUNT);
 
-    const onOne = () => {
+    const onDone = () => {
       if (cancelled) return;
-      loaded++;
-      setLoadProgress(Math.round((loaded / FRAME_COUNT) * 100));
-      if (loaded === FRAME_COUNT) {
-        drawFrame(0);      // 첫 프레임 즉시 표시
+      done++;
+      setLoadProgress(Math.round((done / FRAME_COUNT) * 100));
+      if (done === FRAME_COUNT) {
+        bitmapStore.current = bitmaps;
+        drawFrame(0);
         setFadeOut(true);
         setTimeout(() => setLoadDone(true), 800);
       }
     };
 
-    for (let i = 0; i < FRAME_COUNT; i++) {
+    paths.forEach((path, i) => {
       const img = new Image();
-      img.onload  = onOne;
-      img.onerror = onOne;
-      img.src = paths[i];
-      imgs.push(img);
-    }
-
-    imageStore.current = imgs; // GC 방지: 참조 유지
+      img.onload = async () => {
+        if (cancelled) { onDone(); return; }
+        try {
+          const bmp = await createImageBitmap(img, { resizeWidth: 640, resizeHeight: 360 });
+          if (!cancelled) bitmaps[i] = bmp;
+          else bmp.close();
+        } catch { /* 비트맵 생성 실패 시 무시 */ }
+        onDone();
+      };
+      img.onerror = onDone;
+      img.src = path;
+    });
 
     return () => {
       cancelled = true;
-      imageStore.current = [];
+      bitmapStore.current.forEach(bmp => bmp?.close());
+      bitmapStore.current = [];
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
