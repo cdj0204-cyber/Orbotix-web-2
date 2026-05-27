@@ -201,137 +201,134 @@ function StatCounter({ num, unit, decimals, label }: {
   );
 }
 
-export default function WasperDetailClient() {
-  const containerRef    = useRef<HTMLDivElement>(null);
-  const videoRef        = useRef<HTMLVideoElement>(null);
-  const targetTimeRef   = useRef(0);
-  const rafRef          = useRef(0);
-  const overlayRefs     = useRef<(HTMLDivElement | null)[]>([]);
-  const prevOpacityRef  = useRef<number[]>(OVERLAYS.map(() => 0));
-  const blobUrlRef      = useRef<string | null>(null);
-  const isAnimatingRef  = useRef(false);
+const FRAME_COUNT = 160; // 추출된 WebP 프레임 수
 
-  const [loadProgress, setLoadProgress] = useState(0);   // 0 ~ 100
-  const [loadDone, setLoadDone]         = useState(false); // 전체 다운 완료
-  const [fadeOut, setFadeOut]           = useState(false); // 로딩 화면 페이드아웃
+export default function WasperDetailClient() {
+  const containerRef   = useRef<HTMLDivElement>(null);
+  const canvasRef      = useRef<HTMLCanvasElement>(null);
+  const framesRef      = useRef<HTMLImageElement[]>([]);
+  const overlayRefs    = useRef<(HTMLDivElement | null)[]>([]);
+  const prevOpacityRef = useRef<number[]>(OVERLAYS.map(() => 0));
+  const progressRef    = useRef(0);   // 현재 표시 중인 progress (lerp 대상)
+  const targetProg     = useRef(0);   // 스크롤로 지정된 목표 progress
+  const rafRef         = useRef(0);
+  const readyRef       = useRef(false);
+
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [loadDone, setLoadDone]         = useState(false);
+  const [fadeOut, setFadeOut]           = useState(false);
 
   const { scrollY } = useScroll();
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
-  // ── 영상 전체 사전 다운로드 → Blob URL ─────────────────────────
-  // MP4(H.264): 하드웨어 디코딩 지원 기기 우선 (노트북 포함 대부분)
-  // WebM(VP9) : MP4 미지원 환경 폴백 (사실상 레거시 브라우저 전용)
-  useEffect(() => {
-    let cancelled = false;
+  // ── Canvas에 프레임 그리기 (인접 프레임 블렌딩) ──────────────────
+  const drawFrame = (progress: number) => {
+    const canvas = canvasRef.current;
+    const frames = framesRef.current;
+    if (!canvas || frames.length === 0) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    async function preload() {
-      try {
-        // 기기가 H.264 MP4 하드웨어 디코딩을 지원하면 MP4 우선 사용
-        const tmpVideo = document.createElement("video");
-        const canMP4   = tmpVideo.canPlayType('video/mp4; codecs="avc1.42E01E"') !== "";
-        const src      = canMP4
-          ? "/video/Wasper/Wasper%20detail.mp4"
-          : "/video/Wasper/Wasper%20detail.webm";
-        const mime     = canMP4 ? "video/mp4" : "video/webm";
+    const exact  = progress * (FRAME_COUNT - 1);
+    const idxA   = Math.floor(exact);
+    const idxB   = Math.min(FRAME_COUNT - 1, idxA + 1);
+    const blend  = exact - idxA;
+    const imgA   = frames[idxA];
+    const imgB   = frames[idxB];
+    if (!imgA?.complete || !imgA.naturalWidth) return;
 
-        const res = await fetch(src);
-        const total = Number(res.headers.get("Content-Length")) || 0;
-        const reader = res.body!.getReader();
-        const chunks: Uint8Array<ArrayBuffer>[] = [];
-        let received = 0;
+    // object-fit: cover 계산
+    const cW = canvas.width, cH = canvas.height;
+    const iW = imgA.naturalWidth, iH = imgA.naturalHeight;
+    const scale = Math.max(cW / iW, cH / iH);
+    const dW = iW * scale, dH = iH * scale;
+    const dx = (cW - dW) / 2, dy = (cH - dH) / 2;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (cancelled) return;
-          chunks.push(value);
-          received += value.length;
-          if (total > 0) setLoadProgress(Math.round((received / total) * 100));
-        }
-
-        if (cancelled) return;
-
-        const blob = new Blob(chunks, { type: mime });
-        const url  = URL.createObjectURL(blob);
-        blobUrlRef.current = url;
-
-        const video = videoRef.current;
-        if (!video || cancelled) return;
-        video.src = url;
-        video.load();
-
-        const onReady = () => {
-          if (cancelled) return;
-          video.pause();
-          setLoadProgress(100);
-          // 페이드아웃 시작
-          setFadeOut(true);
-          setTimeout(() => setLoadDone(true), 800); // 페이드 완료 후 완전 제거
-        };
-        video.addEventListener("canplaythrough", onReady, { once: true });
-        // 최대 5초 폴백
-        setTimeout(() => { if (!cancelled) onReady(); }, 5000);
-
-      } catch {
-        if (!cancelled) setLoadDone(true);
-      }
+    ctx.clearRect(0, 0, cW, cH);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(imgA, dx, dy, dW, dH);
+    if (blend > 0.01 && imgB?.complete && imgB.naturalWidth) {
+      ctx.globalAlpha = blend;
+      ctx.drawImage(imgB, dx, dy, dW, dH);
+      ctx.globalAlpha = 1;
     }
-
-    preload();
-    return () => {
-      cancelled = true;
-      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-    };
-  }, []);
-
-  // ── RAF: H.264 seek 기반 스크롤 동기화 ──────────────────────────────
-  // · playbackRate + play() 방식은 노트북에서 자동재생 정책으로 조용히 실패
-  // · seek 방식으로 복귀 + MP4(H.264 하드웨어 디코딩) 조합
-  //   → 하드웨어 가속으로 VP9 때의 끊김 없이 모든 기기에서 안정 동작
-  // · diff * lerp: 멀수록 큰 스텝 → 스크롤 추적
-  //               가까울수록 작은 스텝 → 자연스러운 감속 정지
-  const startRAF = () => {
-    if (isAnimatingRef.current) return;
-    isAnimatingRef.current = true;
-    const video = videoRef.current;
-    if (!video) { isAnimatingRef.current = false; return; }
-
-    const tick = () => {
-      if (!video.duration) { isAnimatingRef.current = false; return; }
-
-      const diff    = targetTimeRef.current - video.currentTime;
-      const absDiff = Math.abs(diff);
-
-      // 1프레임(0.016s) 이내 수렴 → 종료 (스냅 없음)
-      if (absDiff <= 0.016) {
-        isAnimatingRef.current = false;
-        return;
-      }
-
-      // seeking 완료 상태일 때만 업데이트 → 디코딩 과부하 방지
-      if (!video.seeking && video.readyState >= 2) {
-        // 감속 lerp: 스크롤 추적 + 멈출 때 자연스러운 감속
-        video.currentTime += diff * 0.12;
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
   };
 
-  // ── 스크롤 → 비디오 시간 + 오버레이 opacity ─────────────────────
+  // ── 이미지 시퀀스 프리로드 ────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    let loaded = 0;
+    const frames: HTMLImageElement[] = [];
+
+    const onOne = () => {
+      if (cancelled) return;
+      loaded++;
+      setLoadProgress(Math.round((loaded / FRAME_COUNT) * 100));
+      if (loaded === FRAME_COUNT) {
+        framesRef.current = frames;
+        readyRef.current  = true;
+        drawFrame(0);      // 첫 프레임 즉시 표시
+        setFadeOut(true);
+        setTimeout(() => setLoadDone(true), 800);
+      }
+    };
+
+    for (let i = 1; i <= FRAME_COUNT; i++) {
+      const img = new Image();
+      img.onload  = onOne;
+      img.onerror = onOne; // 오류나도 카운트
+      img.src = `/video/Wasper/frames/frame_${String(i).padStart(3, "0")}.webp`;
+      frames.push(img);
+    }
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Canvas 리사이즈 처리 ──────────────────────────────────────────
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const sync = () => {
+      canvas.width  = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      if (readyRef.current) drawFrame(progressRef.current);
+    };
+    const ro = new ResizeObserver(sync);
+    ro.observe(canvas);
+    sync();
+    return () => ro.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── RAF: progress lerp → Canvas 렌더 ─────────────────────────────
+  // · video.currentTime seek 완전 제거 → CPU 디코딩 0
+  // · 이미지 drawImage는 GPU 가속, 어떤 기기에서도 부드럽게 동작
+  // · lerp(0.12)으로 스크롤 감속 정지감 유지
+  useEffect(() => {
+    const tick = () => {
+      const diff = targetProg.current - progressRef.current;
+      if (Math.abs(diff) > 0.0001) {
+        progressRef.current += diff * 0.12;
+        if (readyRef.current) drawFrame(progressRef.current);
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── 스크롤 → progress + 오버레이 opacity ─────────────────────────
   useEffect(() => {
     const onScroll = () => {
       const container = containerRef.current;
-      const video     = videoRef.current;
-      if (!container || !video || !video.duration) return;
+      if (!container) return;
 
       const scrolled = window.scrollY - container.offsetTop;
       const progress = Math.max(0, Math.min(1, scrolled / SCROLL_TOTAL));
-      targetTimeRef.current = progress * video.duration;
-      startRAF(); // 목표 바뀔 때만 RAF 시작
+      targetProg.current = progress;
 
       // 오버레이 opacity + 타자 효과 트리거
       OVERLAYS.forEach((ov, i) => {
@@ -405,13 +402,10 @@ export default function WasperDetailClient() {
       <div ref={containerRef} style={{ height: `calc(100vh + ${SCROLL_TOTAL}px)` }}>
         <div className="sticky top-0 h-screen overflow-hidden" style={{ zIndex: 0 }}>
 
-          {/* 비디오 — Blob URL은 useEffect에서 주입 */}
-          <video
-            ref={videoRef}
-            muted
-            playsInline
-            preload="none"
-            className="absolute inset-0 w-full h-full object-cover object-center"
+          {/* Canvas — 이미지 시퀀스 렌더링 (video.currentTime seek 완전 제거) */}
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full"
             style={{ zIndex: 1 }}
           />
 
