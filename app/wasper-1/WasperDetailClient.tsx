@@ -218,6 +218,10 @@ export default function WasperDetailClient() {
   const progressRef    = useRef(0);   // 현재 표시 중인 progress (lerp 대상)
   const targetProg     = useRef(0);   // 스크롤로 지정된 목표 progress
   const rafRef         = useRef(0);
+  // swap crossfade 상태
+  const frontRef       = useRef<'a' | 'b'>('a'); // 현재 전면 이미지
+  const prevIdxRef     = useRef(-1);              // 마지막으로 표시한 프레임 인덱스
+  const lastSwapRef    = useRef(0);               // 마지막 swap 시각 (ms)
 
   const [loadProgress, setLoadProgress] = useState(0);
   const [loadDone, setLoadDone]         = useState(false);
@@ -227,21 +231,44 @@ export default function WasperDetailClient() {
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
-  // ── 인접 프레임 블렌딩 (8fps에서는 프레임 차이가 작아 잔상 없음) ──
+  // ── swap crossfade: 잔상 없이 부드럽게 ─────────────────────────────
+  // · 한 번에 정확히 하나의 프레임만 불투명(opacity 1) → 잔상 zero
+  // · 프레임이 바뀔 때만 swap; 빠른 스크롤엔 즉시(transition 없이) 전환
+  const CROSSFADE_MS = 40; // 느린 스크롤 시 크로스페이드 지속 시간
+
   const drawFrame = (progress: number) => {
     const paths = framePathsRef.current;
     const imgA  = imgARef.current;
     const imgB  = imgBRef.current;
     if (!imgA || !imgB || paths.length === 0) return;
 
-    const exact = progress * (FRAME_COUNT - 1);
-    const idxA  = Math.floor(exact);
-    const idxB  = Math.min(FRAME_COUNT - 1, idxA + 1);
-    const blend = exact - idxA;
+    const idx = Math.round(progress * (FRAME_COUNT - 1));
+    if (idx === prevIdxRef.current) return; // 프레임 변화 없음 → skip
+    prevIdxRef.current = idx;
 
-    imgA.src = paths[idxA];
-    imgB.src = paths[idxB];
-    imgB.style.opacity = String(blend);
+    const now     = performance.now();
+    const isRapid = (now - lastSwapRef.current) < CROSSFADE_MS;
+    lastSwapRef.current = now;
+    const dur     = isRapid ? 0 : CROSSFADE_MS;
+    const trans   = dur > 0 ? `opacity ${dur}ms ease` : 'none';
+
+    if (frontRef.current === 'a') {
+      // B에 새 프레임 로드 후 B를 전면으로
+      imgB.src = paths[idx];
+      imgA.style.transition = trans;
+      imgB.style.transition = trans;
+      imgA.style.opacity = '0';
+      imgB.style.opacity = '1';
+      frontRef.current = 'b';
+    } else {
+      // A에 새 프레임 로드 후 A를 전면으로
+      imgA.src = paths[idx];
+      imgA.style.transition = trans;
+      imgB.style.transition = trans;
+      imgA.style.opacity = '1';
+      imgB.style.opacity = '0';
+      frontRef.current = 'a';
+    }
   };
 
   // ── 이미지 시퀀스 프리로드 (브라우저 캐시 워밍 + GC 방지) ─────────
@@ -287,7 +314,7 @@ export default function WasperDetailClient() {
     const tick = () => {
       const diff = targetProg.current - progressRef.current;
       if (Math.abs(diff) > 0.0005) {
-        progressRef.current += diff * 0.25;
+        progressRef.current += diff * 0.35;
       }
       drawFrame(progressRef.current); // 항상 렌더 (초기 0 포함)
       rafRef.current = requestAnimationFrame(tick);
@@ -379,7 +406,7 @@ export default function WasperDetailClient() {
       <div ref={containerRef} style={{ height: `calc(100vh + ${SCROLL_TOTAL}px)` }}>
         <div className="sticky top-0 h-screen overflow-hidden" style={{ zIndex: 0 }}>
 
-          {/* 이미지 시퀀스 렌더링 — 인접 프레임 블렌딩 (8fps, 잔상 없음) */}
+          {/* 이미지 시퀀스 렌더링 — swap crossfade (잔상 zero, 빠른 스크롤엔 즉시 전환) */}
           <div className="absolute inset-0" style={{ zIndex: 1, overflow: "hidden" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
