@@ -205,23 +205,19 @@ const FRAME_COUNT = 318; // 추출된 JPEG 프레임 수 (8fps × 39.77s)
 
 export default function WasperDetailClient() {
   const containerRef   = useRef<HTMLDivElement>(null);
-  const imgARef        = useRef<HTMLImageElement>(null);
-  const imgBRef        = useRef<HTMLImageElement>(null);
+  const canvasRef      = useRef<HTMLCanvasElement>(null);
   const framePathsRef  = useRef<string[]>(
     Array.from({ length: FRAME_COUNT }, (_, i) =>
       `/video/Wasper/frames/frame_${String(i + 1).padStart(3, "0")}.jpg`
     )
   );
-  const imageStore     = useRef<HTMLImageElement[]>([]); // GC 방지용 참조 보관
+  const imageStore     = useRef<HTMLImageElement[]>([]); // 프리로드 Image 객체 보관
   const overlayRefs    = useRef<(HTMLDivElement | null)[]>([]);
   const prevOpacityRef = useRef<number[]>(OVERLAYS.map(() => 0));
-  const progressRef    = useRef(0);   // 현재 표시 중인 progress
-  const targetProg     = useRef(0);   // 스크롤로 지정된 목표 progress
+  const progressRef    = useRef(0);
+  const targetProg     = useRef(0);
   const rafRef         = useRef(0);
-  // swap crossfade 상태
-  const frontRef       = useRef<'a' | 'b'>('a'); // 현재 전면 이미지
-  const prevIdxRef     = useRef(-1);              // 마지막으로 표시한 프레임 인덱스
-  const lastSwapRef    = useRef(0);               // 마지막 swap 시각 (ms)
+  const prevIdxRef     = useRef(-1);
 
   const [loadProgress, setLoadProgress] = useState(0);
   const [loadDone, setLoadDone]         = useState(false);
@@ -231,42 +227,50 @@ export default function WasperDetailClient() {
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
-  // ── swap crossfade: 잔상 없이 부드럽게 ─────────────────────────────
-  // · 한 번에 정확히 하나의 프레임만 불투명(opacity 1) → 잔상 zero
-  // · 프레임이 바뀔 때만 swap; 빠른 스크롤엔 즉시(transition 없이) 전환
-  const CROSSFADE_MS = 40;
-
+  // ── canvas drawImage: 디코딩 제로, 즉시 렌더 ───────────────────────
+  // · imageStore.current[idx] = onload 완료 Image → 이미 디코딩됨
+  // · ctx.drawImage(img) = 메모리 복사만 → URL 재요청·재디코딩 없음
+  // · img.src = url 방식은 캐시 히트여도 JPEG 재디코딩 발생 → 랙 원인
   const drawFrame = (progress: number) => {
-    const paths = framePathsRef.current;
-    const imgA  = imgARef.current;
-    const imgB  = imgBRef.current;
-    if (!imgA || !imgB || paths.length === 0) return;
+    const imgs   = imageStore.current;
+    const canvas = canvasRef.current;
+    if (!canvas || imgs.length === 0) return;
 
     const idx = Math.round(progress * (FRAME_COUNT - 1));
-    if (idx === prevIdxRef.current) return; // 프레임 변화 없음 → skip
+    if (idx === prevIdxRef.current) return;
     prevIdxRef.current = idx;
 
-    const now     = performance.now();
-    const isRapid = (now - lastSwapRef.current) < CROSSFADE_MS;
-    lastSwapRef.current = now;
-    const trans   = isRapid ? 'none' : `opacity ${CROSSFADE_MS}ms ease`;
+    const img = imgs[idx];
+    if (!img?.complete || !img.naturalWidth) return;
 
-    if (frontRef.current === 'a') {
-      imgB.src = paths[idx];
-      imgA.style.transition = trans;
-      imgB.style.transition = trans;
-      imgA.style.opacity = '0';
-      imgB.style.opacity = '1';
-      frontRef.current = 'b';
-    } else {
-      imgA.src = paths[idx];
-      imgA.style.transition = trans;
-      imgB.style.transition = trans;
-      imgA.style.opacity = '1';
-      imgB.style.opacity = '0';
-      frontRef.current = 'a';
-    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // object-fit: cover 계산
+    const cw = canvas.width, ch = canvas.height;
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    const scale = Math.max(cw / iw, ch / ih);
+    const dw = iw * scale, dh = ih * scale;
+    const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
+    ctx.drawImage(img, dx, dy, dw, dh);
   };
+
+  // ── canvas 크기 → 컨테이너에 맞춤 ──────────────────────────────────
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ro = new ResizeObserver(() => {
+      canvas.width  = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      // 리사이즈 후 현재 프레임 재렌더
+      const saved = prevIdxRef.current;
+      prevIdxRef.current = -1;
+      drawFrame(saved >= 0 ? saved / (FRAME_COUNT - 1) : 0);
+    });
+    ro.observe(canvas);
+    return () => ro.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── 이미지 시퀀스 프리로드 (브라우저 캐시 워밍 + GC 방지) ─────────
   useEffect(() => {
@@ -399,40 +403,18 @@ export default function WasperDetailClient() {
       <div ref={containerRef} style={{ height: `calc(100vh + ${SCROLL_TOTAL}px)` }}>
         <div className="sticky top-0 h-screen overflow-hidden" style={{ zIndex: 0 }}>
 
-          {/* 이미지 시퀀스 렌더링 — swap crossfade (잔상 zero, 빠른 스크롤엔 즉시 전환) */}
-          <div className="absolute inset-0" style={{ zIndex: 1, overflow: "hidden" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgARef}
-              src="/video/Wasper/frames/frame_001.jpg"
-              alt=""
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center",
-                display: "block",
-              }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgBRef}
-              src="/video/Wasper/frames/frame_001.jpg"
-              alt=""
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center",
-                display: "block",
-                opacity: 0,
-              }}
-            />
-          </div>
+          {/* 이미지 시퀀스 — canvas 직렬 렌더 (재디코딩 없음, 즉시 표시) */}
+          <canvas
+            ref={canvasRef}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              display: "block",
+              zIndex: 1,
+            }}
+          />
 
           {/* 하단 그라데이션 */}
           <div
