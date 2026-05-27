@@ -215,8 +215,9 @@ export default function WasperDetailClient() {
   const imageStore     = useRef<HTMLImageElement[]>([]); // GC 방지용 참조 보관
   const overlayRefs    = useRef<(HTMLDivElement | null)[]>([]);
   const prevOpacityRef = useRef<number[]>(OVERLAYS.map(() => 0));
-  const progressRef    = useRef(0);   // 현재 표시 중인 progress (lerp 대상)
+  const progressRef    = useRef(0);   // 현재 표시 중인 progress
   const targetProg     = useRef(0);   // 스크롤로 지정된 목표 progress
+  const velocityRef    = useRef(0);   // 스프링 감쇠용 속도
   const rafRef         = useRef(0);
   // swap crossfade 상태
   const frontRef       = useRef<'a' | 'b'>('a'); // 현재 전면 이미지
@@ -306,17 +307,24 @@ export default function WasperDetailClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── RAF: progress lerp → Canvas 렌더 ─────────────────────────────
-  // · diff와 무관하게 매 프레임 drawFrame 호출
-  //   → progress=0(초기)일 때도 첫 프레임이 반드시 표시됨
-  // · drawFrame 내부에서 frames.length===0 체크 → 로딩 전엔 자동 skip
+  // ── RAF: 스프링-감쇠 물리 → drawFrame ───────────────────────────
+  // · 순수 lerp 대신 velocity 를 따로 관리 → 스크롤 멈춰도 관성으로
+  //   자연스럽게 미끄러지며 정지 (아이폰 물리 스크롤과 같은 느낌)
+  // · DAMPING: 마찰 계수 (클수록 빨리 멈춤)
+  // · SPRING : 목표 인력 (클수록 빠르게 추종)
+  const DAMPING = 0.78;
+  const SPRING  = 0.12;
+
   useEffect(() => {
     const tick = () => {
       const diff = targetProg.current - progressRef.current;
-      if (Math.abs(diff) > 0.0005) {
-        progressRef.current += diff * 0.35;
+      // 속도 = 이전 속도 × 감쇠 + 목표 인력
+      velocityRef.current = velocityRef.current * DAMPING + diff * SPRING;
+      // 아주 작은 속도는 0으로 수렴 (무한 micro-update 방지)
+      if (Math.abs(velocityRef.current) > 0.000005) {
+        progressRef.current = Math.max(0, Math.min(1, progressRef.current + velocityRef.current));
       }
-      drawFrame(progressRef.current); // 항상 렌더 (초기 0 포함)
+      drawFrame(progressRef.current);
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
