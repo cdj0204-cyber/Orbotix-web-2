@@ -201,7 +201,7 @@ function StatCounter({ num, unit, decimals, label }: {
   );
 }
 
-const FRAME_COUNT = 159; // 추출된 JPEG 프레임 수
+const FRAME_COUNT = 318; // 추출된 JPEG 프레임 수 (8fps × 39.77s)
 
 export default function WasperDetailClient() {
   const containerRef   = useRef<HTMLDivElement>(null);
