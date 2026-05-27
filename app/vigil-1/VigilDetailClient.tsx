@@ -23,6 +23,31 @@ const ModelViewer = dynamic(() => import("@/components/ModelViewer"), {
   ),
 });
 
+// VIGIL-1 GLB의 4개 mesh → 파트 이름·설명 매핑
+// 실제 클릭 테스트 후 이름이 맞지 않으면 key를 교체하면 됩니다
+const VIGIL_PARTS = {
+  "o object_1": {
+    tag: "01 / AIRFRAME",
+    name: "HEX-FOLD FRAME",
+    description: "Six-arm foldable carbon composite airframe. Engineered for long-endurance surveillance with minimal radar cross-section.",
+  },
+  "o Chamfer2": {
+    tag: "02 / AVIONICS",
+    name: "FLIGHT CONTROLLER",
+    description: "Redundant flight control unit with triple-IMU sensor fusion. Ensures stable autonomous flight under GPS-denied conditions.",
+  },
+  "o Cut-Extrude1": {
+    tag: "03 / PAYLOAD",
+    name: "SENSOR GIMBAL",
+    description: "3-axis stabilized gimbal with 5K optical, thermal, and wide-angle imaging. 360° pan / ±90° tilt coverage.",
+  },
+  "o object_23": {
+    tag: "04 / DEPLOYMENT",
+    name: "LANDING GEAR",
+    description: "Retractable landing assembly with vibration damping. Supports precision touchdown on uneven terrain during field operations.",
+  },
+} as const;
+
 const features = [
   {
     index: "01",
@@ -260,7 +285,7 @@ export default function VigilDetailClient() {
       >
         {/* Full-screen 3D model */}
         <div className="absolute inset-0">
-          <ModelViewer modelPath="/models/vigil_compressed.glb" />
+          <ModelViewer modelPath="/models/vigil_compressed.glb" parts={VIGIL_PARTS} />
         </div>
 
         {/* Scanline overlay */}
@@ -365,14 +390,14 @@ export default function VigilDetailClient() {
             <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-r from-transparent to-black pointer-events-none z-10" />
             {/* top-edge fade */}
             <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black to-transparent pointer-events-none z-10" />
-            <ModelViewer modelPath="/models/vigil_compressed.glb" />
+            <ModelViewer modelPath="/models/vigil_compressed.glb" parts={VIGIL_PARTS} />
           </div>
 
           {/* Right: scrolling feature panels */}
           <div className="lg:w-1/2">
             {/* Mobile model — shown once at top */}
             <div className="lg:hidden w-full h-[60vw] max-h-80 relative">
-              <ModelViewer modelPath="/models/vigil_compressed.glb" />
+              <ModelViewer modelPath="/models/vigil_compressed.glb" parts={VIGIL_PARTS} />
             </div>
 
             {features.map((feature) => (
