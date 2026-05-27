@@ -205,19 +205,19 @@ const FRAME_COUNT = 160; // 추출된 WebP 프레임 수
 
 export default function WasperDetailClient() {
   const containerRef   = useRef<HTMLDivElement>(null);
-  const bgARef         = useRef<HTMLDivElement>(null);
-  const bgBRef         = useRef<HTMLDivElement>(null);
+  const imgARef        = useRef<HTMLImageElement>(null);
+  const imgBRef        = useRef<HTMLImageElement>(null);
   const framePathsRef  = useRef<string[]>(
     Array.from({ length: FRAME_COUNT }, (_, i) =>
       `/video/Wasper/frames/frame_${String(i + 1).padStart(3, "0")}.webp`
     )
   );
+  const imageStore     = useRef<HTMLImageElement[]>([]); // GC 방지용 참조 보관
   const overlayRefs    = useRef<(HTMLDivElement | null)[]>([]);
   const prevOpacityRef = useRef<number[]>(OVERLAYS.map(() => 0));
   const progressRef    = useRef(0);   // 현재 표시 중인 progress (lerp 대상)
   const targetProg     = useRef(0);   // 스크롤로 지정된 목표 progress
   const rafRef         = useRef(0);
-  const readyRef       = useRef(false);
 
   const [loadProgress, setLoadProgress] = useState(0);
   const [loadDone, setLoadDone]         = useState(false);
@@ -227,36 +227,36 @@ export default function WasperDetailClient() {
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
-  // ── CSS backgroundImage로 프레임 표시 (canvas 완전 제거) ──────────
+  // ── <img> 태그로 프레임 표시 (CSS background-image 제거) ──────────
+  // readyRef 게이트 없음 — refs 유효성만 체크
   const drawFrame = (progress: number) => {
-    if (!readyRef.current) return;
     const paths = framePathsRef.current;
-    const divA  = bgARef.current;
-    const divB  = bgBRef.current;
-    if (!divA || !divB) return;
+    const imgA  = imgARef.current;
+    const imgB  = imgBRef.current;
+    if (!imgA || !imgB || paths.length === 0) return;
 
     const exact = progress * (FRAME_COUNT - 1);
     const idxA  = Math.floor(exact);
     const idxB  = Math.min(FRAME_COUNT - 1, idxA + 1);
     const blend = exact - idxA;
 
-    divA.style.backgroundImage = `url('${paths[idxA]}')`;
-    divB.style.backgroundImage = `url('${paths[idxB]}')`;
-    divB.style.opacity = String(blend > 0.01 ? blend : 0);
+    imgA.src = paths[idxA];
+    imgB.src = paths[idxB];
+    imgB.style.opacity = String(blend > 0.01 ? blend : 0);
   };
 
-  // ── 이미지 시퀀스 프리로드 (브라우저 캐시 워밍) ──────────────────
+  // ── 이미지 시퀀스 프리로드 (브라우저 캐시 워밍 + GC 방지) ─────────
   useEffect(() => {
     let cancelled = false;
     let loaded = 0;
     const paths = framePathsRef.current;
+    const imgs: HTMLImageElement[] = [];
 
     const onOne = () => {
       if (cancelled) return;
       loaded++;
       setLoadProgress(Math.round((loaded / FRAME_COUNT) * 100));
       if (loaded === FRAME_COUNT) {
-        readyRef.current = true;
         drawFrame(0);      // 첫 프레임 즉시 표시
         setFadeOut(true);
         setTimeout(() => setLoadDone(true), 800);
@@ -266,11 +266,17 @@ export default function WasperDetailClient() {
     for (let i = 0; i < FRAME_COUNT; i++) {
       const img = new Image();
       img.onload  = onOne;
-      img.onerror = onOne; // 오류나도 카운트
+      img.onerror = onOne;
       img.src = paths[i];
+      imgs.push(img);
     }
 
-    return () => { cancelled = true; };
+    imageStore.current = imgs; // GC 방지: 참조 유지
+
+    return () => {
+      cancelled = true;
+      imageStore.current = [];
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -374,24 +380,36 @@ export default function WasperDetailClient() {
       <div ref={containerRef} style={{ height: `calc(100vh + ${SCROLL_TOTAL}px)` }}>
         <div className="sticky top-0 h-screen overflow-hidden" style={{ zIndex: 0 }}>
 
-          {/* 이미지 시퀀스 렌더링 — CSS backgroundImage (canvas 제거) */}
-          <div className="absolute inset-0" style={{ zIndex: 1 }}>
-            <div
-              ref={bgARef}
-              className="absolute inset-0"
+          {/* 이미지 시퀀스 렌더링 — <img> 태그 직접 사용 */}
+          <div className="absolute inset-0" style={{ zIndex: 1, overflow: "hidden" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgARef}
+              src="/video/Wasper/frames/frame_001.webp"
+              alt=""
               style={{
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center",
+                display: "block",
               }}
             />
-            <div
-              ref={bgBRef}
-              className="absolute inset-0"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgBRef}
+              src="/video/Wasper/frames/frame_001.webp"
+              alt=""
               style={{
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center",
+                display: "block",
                 opacity: 0,
               }}
             />
