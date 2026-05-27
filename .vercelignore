@@ -1,10 +1,9 @@
-# Oversized files — excluded from Vercel deployment (>100 MB limit)
-public/models/wasper_event.glb
-public/models/vigil_event.glb
-
-# Vigil MP4 source videos (not used at runtime)
-public/video/Vigil/
-
-# Unused video variants
-public/video/Main page/main video_1.mp4
-public/video/Main page/main video_1_webm_2.webm
+.next
+.claude
+node_modules
+coverage
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+.DS_Store
+*.pem
