@@ -208,42 +208,92 @@ export default function WasperDetailClient() {
   const rafRef          = useRef(0);
   const overlayRefs     = useRef<(HTMLDivElement | null)[]>([]);
   const prevOpacityRef  = useRef<number[]>(OVERLAYS.map(() => 0));
-  const [videoReady, setVideoReady] = useState(false);
+  const blobUrlRef      = useRef<string | null>(null);
+  const isAnimatingRef  = useRef(false);
+
+  const [loadProgress, setLoadProgress] = useState(0);   // 0 ~ 100
+  const [loadDone, setLoadDone]         = useState(false); // 전체 다운 완료
+  const [fadeOut, setFadeOut]           = useState(false); // 로딩 화면 페이드아웃
 
   const { scrollY } = useScroll();
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const textY       = useTransform(scrollY, [0, 300], [0, -40]);
 
-  // ── 비디오 로드 감지 ────────────────────────────────────────────
+  // ── 영상 전체 사전 다운로드 → Blob URL ─────────────────────────
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.readyState >= 2) { setVideoReady(true); return; }
-    const onReady = () => setVideoReady(true);
-    const fallback = window.setTimeout(() => setVideoReady(true), 4000);
-    video.addEventListener("canplay", onReady, { once: true });
+    let cancelled = false;
+
+    async function preload() {
+      try {
+        const res = await fetch("/video/Wasper/Wasper%20detail.mp4");
+        const total = Number(res.headers.get("Content-Length")) || 0;
+        const reader = res.body!.getReader();
+        const chunks: Uint8Array[] = [];
+        let received = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (cancelled) return;
+          chunks.push(value);
+          received += value.length;
+          if (total > 0) setLoadProgress(Math.round((received / total) * 100));
+        }
+
+        if (cancelled) return;
+
+        const blob = new Blob(chunks, { type: "video/mp4" });
+        const url  = URL.createObjectURL(blob);
+        blobUrlRef.current = url;
+
+        const video = videoRef.current;
+        if (!video || cancelled) return;
+        video.src = url;
+        video.load();
+
+        const onReady = () => {
+          if (cancelled) return;
+          video.pause();
+          setLoadProgress(100);
+          // 페이드아웃 시작
+          setFadeOut(true);
+          setTimeout(() => setLoadDone(true), 800); // 페이드 완료 후 완전 제거
+        };
+        video.addEventListener("canplaythrough", onReady, { once: true });
+        // 최대 5초 폴백
+        setTimeout(() => { if (!cancelled) onReady(); }, 5000);
+
+      } catch {
+        if (!cancelled) setLoadDone(true);
+      }
+    }
+
+    preload();
     return () => {
-      video.removeEventListener("canplay", onReady);
-      clearTimeout(fallback);
+      cancelled = true;
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
     };
   }, []);
 
-  // ── RAF: video currentTime 보간 ─────────────────────────────────
-  useEffect(() => {
+  // ── RAF: 스크롤 시작 시에만 켜지고, 목표 도달 시 자동으로 꺼짐 ──
+  // → 유휴 상태에서 60fps seek 없음, 감속 느낌은 그대로 유지
+  const startRAF = () => {
+    if (isAnimatingRef.current) return;
+    isAnimatingRef.current = true;
     const video = videoRef.current;
-    if (!video) return;
     const tick = () => {
-      if (video.duration) {
-        const diff = targetTimeRef.current - video.currentTime;
-        if (Math.abs(diff) > 0.016) {
-          video.currentTime = video.currentTime + diff * 0.08;
-        }
+      if (!video || !video.duration) { isAnimatingRef.current = false; return; }
+      const diff = targetTimeRef.current - video.currentTime;
+      if (Math.abs(diff) > 0.018) {
+        video.currentTime = video.currentTime + diff * 0.1; // 감속 lerp 유지
+        rafRef.current = requestAnimationFrame(tick);       // 목표 미도달 → 계속
+      } else {
+        if (Math.abs(diff) > 0.001) video.currentTime = targetTimeRef.current; // 정확히 스냅
+        isAnimatingRef.current = false;                     // 도달 → RAF 종료
       }
-      rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
+  };
 
   // ── 스크롤 → 비디오 시간 + 오버레이 opacity ─────────────────────
   useEffect(() => {
@@ -255,6 +305,7 @@ export default function WasperDetailClient() {
       const scrolled = window.scrollY - container.offsetTop;
       const progress = Math.max(0, Math.min(1, scrolled / SCROLL_TOTAL));
       targetTimeRef.current = progress * video.duration;
+      startRAF(); // 목표 바뀔 때만 RAF 시작
 
       // 오버레이 opacity + 타자 효과 트리거
       OVERLAYS.forEach((ov, i) => {
@@ -289,25 +340,53 @@ export default function WasperDetailClient() {
 
   return (
     <div className="bg-black">
+
+      {/* ── 로딩 화면 ────────────────────────────────────────────────── */}
+      {!loadDone && (
+        <div
+          className="fixed inset-0 flex flex-col items-center justify-center gap-10"
+          style={{
+            backgroundColor: "#000",
+            zIndex: 9999,
+            opacity: fadeOut ? 0 : 1,
+            transition: "opacity 0.8s ease",
+            pointerEvents: fadeOut ? "none" : "auto",
+          }}
+        >
+          {/* ORBOTIX 로고 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/image/Orbotix_Logo_Icon_W.png"
+            alt="ORBOTIX"
+            style={{ height: 36, objectFit: "contain", opacity: 0.9 }}
+          />
+
+          {/* 진행 바 + 퍼센트 */}
+          <div className="flex flex-col items-center gap-3 w-48">
+            <div className="w-full h-px bg-white/10 overflow-hidden">
+              <div
+                className="h-full bg-white"
+                style={{ width: `${loadProgress}%`, transition: "width 0.2s ease" }}
+              />
+            </div>
+            <span className="text-white/30 text-[9px] tracking-[0.4em] font-mono uppercase">
+              {loadProgress < 100 ? `Loading  ${loadProgress}%` : "Initializing..."}
+            </span>
+          </div>
+        </div>
+      )}
+
       <div ref={containerRef} style={{ height: `calc(100vh + ${SCROLL_TOTAL}px)` }}>
         <div className="sticky top-0 h-screen overflow-hidden" style={{ zIndex: 0 }}>
 
-          {/* 비디오 */}
+          {/* 비디오 — Blob URL은 useEffect에서 주입 */}
           <video
             ref={videoRef}
             muted
             playsInline
-            preload="auto"
+            preload="none"
             className="absolute inset-0 w-full h-full object-cover"
             style={{ zIndex: 1 }}
-          >
-            <source src="/video/Wasper/Wasper%20detail.mp4" type="video/mp4" />
-          </video>
-
-          {/* 블랙 커버: 로딩 전 */}
-          <div
-            className="absolute inset-0 pointer-events-none transition-opacity duration-700"
-            style={{ backgroundColor: "#000", zIndex: 2, opacity: videoReady ? 0 : 1 }}
           />
 
           {/* 하단 그라데이션 */}
