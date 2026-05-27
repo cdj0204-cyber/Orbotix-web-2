@@ -293,18 +293,11 @@ export default function WasperDetailClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── RAF: lerp 감속 → drawFrame ───────────────────────────────────
-  // · lerp(progress, target, factor): 구조적으로 target을 절대 지나칠 수 없음
-  //   → 왔다갔다 oscillation 불가능
-  // · factor 0.12: 남은 거리의 12%씩 이동 → 자연스러운 exponential 감속
-  //   (60fps 기준 약 400ms에 걸쳐 부드럽게 정지)
-  const LERP = 0.12;
-
   useEffect(() => {
     const tick = () => {
       const diff = targetProg.current - progressRef.current;
-      if (Math.abs(diff) > 0.000001) {
-        progressRef.current += diff * LERP;
+      if (Math.abs(diff) > 0.0005) {
+        progressRef.current += diff * 0.35;
       }
       drawFrame(progressRef.current);
       rafRef.current = requestAnimationFrame(tick);
