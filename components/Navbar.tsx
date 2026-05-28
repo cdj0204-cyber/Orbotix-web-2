@@ -14,7 +14,7 @@ const navItems: NavItem[] = [
   {
     label: "ATA SYSTEM",
     dropdown: [
-      { label: "WASPER-1", href: "/wasper-1" },
+        { label: "WASPER-2", href: "/wasper-2" },
     ],
   },
   {
