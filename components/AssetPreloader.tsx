@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 
@@ -6,8 +6,8 @@ import { useEffect } from "react";
 // 페이지 로드 직후 백그라운드 fetch → HTTP 캐시에 적재
 // → 해당 섹션 스크롤 시 ModelViewer가 캐시에서 즉시 로드
 const ASSETS = [
-  "/models/wasper_compressed.glb",  // WASPER-1 (3.4 MB)
-  "/models/vigil_compressed.glb",   // VIGIL-1  (2.6 MB)
+  "/models/wasper_compressed.glb",  // VASPYR-1 (3.4 MB)
+  "/models/vigil_compressed.glb",   // VYGIL-1  (2.6 MB)
   "/draco/draco_wasm_wrapper.js",   // Draco WASM wrapper
   "/draco/draco_decoder.wasm",      // Draco decoder
   "/draco/draco_decoder.js",        // Draco decoder (JS fallback)

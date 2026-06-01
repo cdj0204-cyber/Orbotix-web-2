@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
@@ -47,7 +47,7 @@ export default function VIGIL1() {
           transition={{ duration: 0.5 }}
           className="text-white/30 text-[10px] tracking-[0.4em] uppercase font-mono mb-8"
         >
-          02.1 / VIGIL-1
+          02.1 / VYGIL-1
         </motion.p>
 
         {/* ── 3D Viewer ────────────────────────────────────────────────── */}
@@ -83,7 +83,7 @@ export default function VIGIL1() {
           {/* HUD label */}
           <div className="absolute top-4 right-10 z-10 pointer-events-none">
             <span className="text-white/20 text-[8px] tracking-[0.3em] font-mono uppercase">
-              VIGIL-1 / 3D
+              VYGIL-1 / 3D
             </span>
           </div>
 
@@ -100,14 +100,14 @@ export default function VIGIL1() {
           >
             <div>
               <p className="text-sm sm:text-base lg:text-[15px] font-medium tracking-tighter text-white uppercase leading-none mb-3">
-                VMBRA SYSTEM
+                UMBRIX SYSTEM
               </p>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tighter text-white uppercase leading-none">
-                VIGIL 01
+                VYGIL 01
               </h2>
             </div>
             <button className="mt-auto self-start px-6 py-3 border border-white text-white text-xs tracking-widest uppercase font-semibold hover:bg-white hover:text-black transition-all duration-200">
-              VIEW VIGIL 01
+              VIEW VYGIL 01
             </button>
           </motion.div>
 

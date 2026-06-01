@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
@@ -51,7 +51,7 @@ export default function WASPER1() {
           transition={{ duration: 0.5 }}
           className="text-white/30 text-[15px] tracking-[0.4em] uppercase font-mono mb-8"
         >
-          01.1 / WASPER-1
+          01.1 / VASPYR-1
         </motion.p>
 
         {/* ── 3D Viewer ────────────────────────────────────────────────── */}
@@ -87,7 +87,7 @@ export default function WASPER1() {
           {/* HUD label */}
           <div className="absolute top-4 right-10 z-10 pointer-events-none">
             <span className="text-white/20 text-[8px] tracking-[0.3em] font-mono uppercase">
-              WASPER-1 / 3D
+              VASPYR-1 / 3D
             </span>
           </div>
 
@@ -104,11 +104,11 @@ export default function WASPER1() {
           >
             <div>
               <p className="text-sm sm:text-lg font-medium text-white uppercase leading-none mb-1">
-                ATA SYSTEM
+                ATX SYSTEM
               </p>
               <div className="flex items-baseline gap-4 sm:gap-8 flex-wrap">
                 <h2 className="text-[2.75rem] sm:text-[4.5rem] lg:text-[6.75rem] xl:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none">
-                  WASPER 01
+                  VASPYR 01
                 </h2>
                 <button className="text-white text-sm sm:text-lg font-medium uppercase underline underline-offset-4 hover:text-white/60 transition-colors duration-200 whitespace-nowrap">
                   VIEW MORE

@@ -1,13 +1,13 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 
 const links = {
   Systems: [
-    { label: "ATA System", href: "#ata-system" },
-    { label: "WASPER-1", href: "#wasper-1" },
-    { label: "VMBRA System", href: "#vmbra-system" },
-    { label: "VIGIL-1", href: "#vigil-1" },
+    { label: "ATX System", href: "#ata-system" },
+    { label: "VASPYR-1", href: "#wasper-1" },
+    { label: "UMBRIX System", href: "#vmbra-system" },
+    { label: "VYGIL-1", href: "#vigil-1" },
   ],
   Company: [
     { label: "Mission", href: "#mission" },

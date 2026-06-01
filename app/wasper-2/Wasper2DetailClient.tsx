@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { gsap } from "gsap";
@@ -49,7 +49,7 @@ const OVERLAYS = [
     side: "right" as const,
     label: "04 / OVERVIEW",
     title: "Gen 2.0\nUAV",
-    body: "WASPER-2 is the next-generation\nloitering munition designed for\nhigh-value target engagement.",
+    body: "VASPYR-2 is the next-generation\nloitering munition designed for\nhigh-value target engagement.",
   },
 ];
 
@@ -140,29 +140,45 @@ function StatCounter({ num, unit, decimals, label }: {
   num: number; unit: string; decimals: number; label: string;
 }) {
   const [count, setCount] = useState(0);
-  const ref     = useRef<HTMLDivElement>(null);
-  const started = useRef(false);
+  const ref       = useRef<HTMLDivElement>(null);
+  const rafRef    = useRef(0);
+  const isRunning = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting || started.current) return;
-      started.current = true;
-      const DURATION = 2000;
-      const start = performance.now();
-      const tick = (now: number) => {
-        const t      = Math.min((now - start) / DURATION, 1);
-        const eased  = 1 - Math.pow(1 - t, 3);
-        const current = parseFloat((num * eased).toFixed(decimals));
-        setCount(current);
-        if (t < 1) requestAnimationFrame(tick);
-        else setCount(num);
-      };
-      requestAnimationFrame(tick);
+      if (entry.isIntersecting) {
+        // 뷰포트 진입 → 애니메이션 시작
+        if (isRunning.current) return;
+        isRunning.current = true;
+        const DURATION = 2000;
+        const start = performance.now();
+        const tick = (now: number) => {
+          const t       = Math.min((now - start) / DURATION, 1);
+          const eased   = 1 - Math.pow(1 - t, 3);
+          const current = parseFloat((num * eased).toFixed(decimals));
+          setCount(current);
+          if (t < 1) {
+            rafRef.current = requestAnimationFrame(tick);
+          } else {
+            setCount(num);
+            isRunning.current = false;
+          }
+        };
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        // 뷰포트 이탈 → 카운트 리셋 (다음 진입 시 재생)
+        cancelAnimationFrame(rafRef.current);
+        isRunning.current = false;
+        setCount(0);
+      }
     }, { threshold: 0.5 });
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(rafRef.current);
+    };
   }, [num, decimals]);
 
   return (
@@ -179,23 +195,29 @@ function StatCounter({ num, unit, decimals, label }: {
 export default function Wasper2DetailClient() {
   const containerRef    = useRef<HTMLDivElement>(null);
   const canvasRef       = useRef<HTMLCanvasElement>(null);
-  const framesRef       = useRef<HTMLImageElement[]>([]);
+  // 개별 슬롯으로 관리 — 로드된 프레임만 즉시 접근 가능
+  const framesRef       = useRef<(HTMLImageElement | null)[]>(
+    new Array(FRAME_COUNT).fill(null)
+  );
   const currentFrameRef = useRef(0);
-  const heroRef         = useRef<HTMLDivElement>(null);
   const overlayRefs     = useRef<(HTMLDivElement | null)[]>([]);
   const prevOpacityRef  = useRef<number[]>(OVERLAYS.map(() => 0));
 
-  const [loadProgress, setLoadProgress] = useState(0);
-  const [loadDone, setLoadDone]         = useState(false);
-  const [fadeOut, setFadeOut]           = useState(false);
-
   // ── Canvas: object-fit:cover 드로우 ──────────────────────────────────
+  // 해당 인덱스 프레임이 없으면 가장 가까운 이전 프레임으로 대체
   const drawFrame = useCallback((index: number) => {
     const canvas = canvasRef.current;
-    const frame  = framesRef.current[index];
-    if (!canvas || !frame) return;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    let frame = framesRef.current[index];
+    if (!frame) {
+      for (let i = index - 1; i >= 0; i--) {
+        if (framesRef.current[i]) { frame = framesRef.current[i]; break; }
+      }
+    }
+    if (!frame) return;
 
     const cw = canvas.width,  ch = canvas.height;
     const fw = frame.naturalWidth, fh = frame.naturalHeight;
@@ -221,34 +243,26 @@ export default function Wasper2DetailClient() {
     return () => window.removeEventListener("resize", resize);
   }, [drawFrame]);
 
-  // ── 프레임 프리로드 (동시 8개) ────────────────────────────────────────
+  // ── 프레임 백그라운드 프리로드 (동시 8개) ────────────────────────────
+  // 로딩 화면 없음 — 유저가 타이틀/스펙을 읽는 동안 조용히 로드
   useEffect(() => {
     let cancelled = false;
-    const imgs: HTMLImageElement[] = new Array(FRAME_COUNT);
-    let loaded = 0;
 
     const loadOne = (i: number): Promise<void> =>
       new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
           if (!cancelled) {
-            imgs[i] = img;
-            loaded++;
-            setLoadProgress(Math.round((loaded / FRAME_COUNT) * 100));
-            if (loaded === FRAME_COUNT) {
-              framesRef.current = imgs;
-              drawFrame(0);
-              setFadeOut(true);
-              setTimeout(() => setLoadDone(true), 800);
-            }
+            framesRef.current[i] = img;
+            // frame 0 준비되면 즉시 canvas에 표시
+            if (i === 0) drawFrame(0);
           }
           resolve();
         };
-        img.onerror = () => { loaded++; resolve(); };
+        img.onerror = () => resolve();
         img.src = FRAME_URL(i + 1);
       });
 
-    // 8개 워커 동시 실행
     let idx = 0;
     const worker = async () => {
       while (idx < FRAME_COUNT) {
@@ -261,24 +275,20 @@ export default function Wasper2DetailClient() {
     return () => { cancelled = true; };
   }, [drawFrame]);
 
-  // ── Lenis + GSAP ScrollTrigger ────────────────────────────────────────
+  // ── Lenis + GSAP ScrollTrigger (마운트 즉시 초기화) ──────────────────
+  // loadDone 대기 없음 — 프레임 로드 전이면 canvas가 검정으로 유지됨
   useEffect(() => {
-    if (!loadDone) return;
     const container = containerRef.current;
     if (!container) return;
 
     gsap.registerPlugin(ScrollTrigger);
 
-    // Lenis 초기화
     const lenis = new Lenis({ lerp: 0.08 });
-
     lenis.on("scroll", ScrollTrigger.update);
-
     const lenisRaf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(lenisRaf);
     gsap.ticker.lagSmoothing(0);
 
-    // ScrollTrigger: 스크롤 → 프레임 렌더 + 오버레이
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: container,
@@ -286,7 +296,7 @@ export default function Wasper2DetailClient() {
         end: `+=${SCROLL_TOTAL}`,
         scrub: true,
         onUpdate: (self) => {
-          // ── 프레임 인덱스 계산 → Canvas 드로우 ──────────────────
+          // 프레임 인덱스 → Canvas 드로우
           const frameIdx = Math.min(
             Math.round(self.progress * (FRAME_COUNT - 1)),
             FRAME_COUNT - 1,
@@ -296,16 +306,8 @@ export default function Wasper2DetailClient() {
             drawFrame(frameIdx);
           }
 
-          // ── 히어로 텍스트 페이드 아웃 ───────────────────────────
-          const scrolled   = self.progress * SCROLL_TOTAL;
-          const heroAlpha  = Math.max(0, 1 - scrolled / 300);
-          const heroTransY = -40 * (1 - heroAlpha);
-          if (heroRef.current) {
-            heroRef.current.style.opacity   = String(heroAlpha);
-            heroRef.current.style.transform = `translateY(calc(-50% + ${heroTransY}px))`;
-          }
-
-          // ── 오버레이 opacity + 타자 효과 ────────────────────────
+          // 오버레이 opacity + 타자 효과
+          const scrolled = self.progress * SCROLL_TOTAL;
           OVERLAYS.forEach((ov, i) => {
             const el = overlayRefs.current[i];
             if (!el) return;
@@ -325,7 +327,7 @@ export default function Wasper2DetailClient() {
       lenis.destroy();
       gsap.ticker.remove(lenisRaf);
     };
-  }, [loadDone, drawFrame]);
+  }, [drawFrame]);
 
   // ── 스펙 데이터 ───────────────────────────────────────────────────────
   const stats = [
@@ -345,43 +347,107 @@ export default function Wasper2DetailClient() {
   return (
     <div className="bg-black">
 
-      {/* ── 로딩 화면 ────────────────────────────────────────────────── */}
-      {!loadDone && (
-        <div
-          className="fixed inset-0 flex flex-col items-center justify-center gap-10"
-          style={{
-            backgroundColor: "#000",
-            zIndex: 9999,
-            opacity: fadeOut ? 0 : 1,
-            transition: "opacity 0.8s ease",
-            pointerEvents: fadeOut ? "none" : "auto",
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/image/Orbotix_Logo_Icon_W.png"
-            alt="ORBOTIX"
-            style={{ height: 36, objectFit: "contain", opacity: 0.9 }}
-          />
-          <div className="flex flex-col items-center gap-3 w-48">
-            <div className="w-full h-px bg-white/10 overflow-hidden">
-              <div
-                className="h-full bg-white transition-[width] duration-200 ease-out"
-                style={{ width: `${loadProgress}%` }}
-              />
-            </div>
-            <span className="text-white/30 text-[9px] tracking-[0.4em] font-mono uppercase">
-              {loadProgress < 100 ? `Loading  ${loadProgress}%` : "Initializing..."}
+      {/* ── 1. 히어로 타이틀 섹션 (즉시 표시) ───────────────────────── */}
+      <section className="relative min-h-screen flex flex-col justify-center px-4 sm:px-10 pt-16">
+        <div className="flex items-start gap-1 sm:gap-3 lg:gap-4">
+
+          {/* 왼쪽 카테고리 라벨 (TITLE) — 오른쪽 첫 번째 줄(ATX SYSTEM) 캡 상단에 정렬 */}
+          <div className="hidden sm:block shrink-0 w-[120px] lg:w-[160px] mt-4">
+            <span
+              className="text-white text-base font-medium uppercase tracking-widest"
+              style={{ fontFamily: "var(--font-montserrat)" }}
+            >
+              TITLE
             </span>
           </div>
-        </div>
-      )}
 
-      {/* ── 스크롤 섹션 ──────────────────────────────────────────────── */}
+          {/* 오른쪽: ATX SYSTEM + VASPYR-2 동일 크기 2줄 */}
+          <div className="flex flex-col items-start">
+            <p className="text-[2.75rem] sm:text-[4.5rem] lg:text-[6.75rem] xl:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none">
+              ATX SYSTEM
+            </p>
+            <h1 className="text-[2.75rem] sm:text-[4.5rem] lg:text-[6.75rem] xl:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none">
+              VASPYR-2
+            </h1>
+          </div>
+
+        </div>
+
+        {/* 스크롤 인디케이터 — 우측 하단 */}
+        <div className="absolute bottom-10 right-10 flex flex-col items-center gap-2 pointer-events-none">
+          <svg
+            className="animate-bounce text-white/40"
+            width="24" height="24" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
+        </div>
+      </section>
+
+      {/* ── 2. 스펙 + 기능 섹션 (즉시 표시) ─────────────────────────── */}
+      <section className="bg-black py-16 sm:py-28 lg:py-36 px-4 sm:px-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 items-start">
+
+          {/* ── SPEC 단 ── */}
+          <div className="flex gap-1 sm:gap-3 lg:gap-4 items-start">
+            {/* 라벨 */}
+            <div className="hidden sm:block shrink-0 w-[120px] lg:w-[160px]">
+              <span
+                className="text-white text-base font-medium uppercase tracking-widest"
+                style={{ fontFamily: "var(--font-montserrat)" }}
+              >
+                SPEC
+              </span>
+            </div>
+            {/* 스탯 목록 */}
+            <div className="flex-1">
+              {stats.map((s, idx) => (
+                <div key={s.l} className={idx === 0 ? "pb-4 sm:pb-6" : "py-4 sm:py-6"}>
+                  <StatCounter
+                    num={s.num}
+                    unit={s.unit}
+                    decimals={s.decimals}
+                    label={s.l}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── FEATURES 단 ── */}
+          <div className="flex gap-1 sm:gap-3 lg:gap-4 items-start mt-12 sm:mt-0">
+            {/* 라벨 */}
+            <div className="hidden sm:block shrink-0 w-[120px] lg:w-[160px]">
+              <span
+                className="text-white text-base font-medium uppercase tracking-widest"
+                style={{ fontFamily: "var(--font-montserrat)" }}
+              >
+                FEATURES
+              </span>
+            </div>
+            {/* 피처 목록 */}
+            <div className="flex-1">
+              {features.map((f, i) => (
+                <div key={f.title} className={i === 0 ? "pb-4 sm:pb-6" : "py-4 sm:py-6"}>
+                  <h4 className="text-white text-[13px] sm:text-[15px] font-medium uppercase tracking-widest mb-2">
+                    {String(i + 1).padStart(2, "0")}. {f.title}
+                  </h4>
+                  <p className="text-white text-base sm:text-lg leading-relaxed">{f.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── 3. 캔버스 스크롤 섹션 (백그라운드 로드 완료 후 재생) ──────── */}
       <div ref={containerRef} style={{ height: `calc(100vh + ${SCROLL_TOTAL}px)` }}>
         <div className="sticky top-0 h-screen overflow-hidden" style={{ zIndex: 0 }}>
 
-          {/* Canvas — 프레임 렌더링 */}
+          {/* Canvas */}
           <canvas
             ref={canvasRef}
             style={{
@@ -450,65 +516,8 @@ export default function Wasper2DetailClient() {
             </div>
           ))}
 
-          {/* 히어로 텍스트 */}
-          <div
-            ref={heroRef}
-            style={{ zIndex: 5, position: "absolute", top: "50%", left: 0, transform: "translateY(-50%)" }}
-            className="left-3 sm:left-[40px] px-3 sm:px-[40px]"
-          >
-            <p className="text-white text-sm sm:text-lg font-medium uppercase leading-none mb-1">
-              ATA SYSTEM
-            </p>
-            <h1 className="text-[2.75rem] sm:text-[4.5rem] lg:text-[6.75rem] xl:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none">
-              WASPER-2
-            </h1>
-          </div>
-
-          {/* 스크롤 인디케이터 */}
-          <div
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none"
-            style={{ zIndex: 5 }}
-          >
-            <div className="w-px h-8 bg-gradient-to-b from-white/30 to-transparent animate-bounce" />
-          </div>
-
         </div>
       </div>
-
-      {/* ── 스펙 + 기능 섹션 ─────────────────────────────────────────── */}
-      <section className="bg-black py-16 sm:py-28 lg:py-36 px-4 sm:px-10">
-        <div className="mb-16 sm:mb-[250px]">
-          <p className="text-sm sm:text-lg font-medium text-white uppercase leading-none mb-1">
-            ATA SYSTEM
-          </p>
-          <div className="flex items-baseline gap-4 sm:gap-8 flex-wrap">
-            <h2 className="text-[2.75rem] sm:text-[4.5rem] lg:text-[6.75rem] xl:text-[9rem] font-medium tracking-tighter text-white uppercase leading-none">
-              WASPER-2
-            </h2>
-          </div>
-        </div>
-
-        {features.map((f, i) => (
-          <div key={f.title} className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 py-4 sm:py-6 border-t border-white/[0.06]">
-            <div>
-              {stats[i] ? (
-                <StatCounter
-                  num={stats[i].num}
-                  unit={stats[i].unit}
-                  decimals={stats[i].decimals}
-                  label={stats[i].l}
-                />
-              ) : null}
-            </div>
-            <div>
-              <h4 className="text-white text-[13px] sm:text-[15px] font-medium uppercase tracking-widest mb-2">
-                {String(i + 1).padStart(2, "0")}. {f.title}
-              </h4>
-              <p className="text-white text-base sm:text-lg leading-relaxed">{f.body}</p>
-            </div>
-          </div>
-        ))}
-      </section>
 
     </div>
   );

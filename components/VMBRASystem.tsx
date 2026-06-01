@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
@@ -9,7 +9,7 @@ const capabilities = [
   "Behavioral anomaly detection: flags deviations from baseline patterns",
   "Automated threat classification with <0.3s response latency",
   "Encrypted edge processing — data never leaves the operational theater",
-  "Seamless handoff between stationary sensors and mobile VIGIL-1 assets",
+  "Seamless handoff between stationary sensors and mobile VYGIL-1 assets",
 ];
 
 export default function VMBRASystem({ hideButton }: { hideButton?: boolean } = {}) {
@@ -25,7 +25,7 @@ export default function VMBRASystem({ hideButton }: { hideButton?: boolean } = {
           transition={{ duration: 0.5 }}
           className="text-white/30 text-[10px] tracking-[0.4em] uppercase font-mono mb-16"
         >
-          02 / VMBRA SYSTEM
+          02 / UMBRIX SYSTEM
         </motion.p>
 
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
@@ -44,7 +44,7 @@ export default function VMBRASystem({ hideButton }: { hideButton?: boolean } = {
               AWARENESS
             </h2>
             <p className="text-white/50 text-base leading-relaxed mb-10 max-w-md">
-              VMBRA is Orbotix&apos;s AI-driven persistent surveillance architecture.
+              UMBRIX is Orbotix&apos;s AI-driven persistent surveillance architecture.
               A distributed network of stationary sensor nodes and mobile aerial assets
               creates an unblinking eye over any operational area — processing,
               classifying, and alerting without human bottlenecks.
@@ -70,7 +70,7 @@ export default function VMBRASystem({ hideButton }: { hideButton?: boolean } = {
                 onClick={() => document.querySelector("#vigil-1")?.scrollIntoView({ behavior: "smooth" })}
                 className="px-8 py-3 border border-white text-white text-xs tracking-[0.25em] uppercase font-bold hover:bg-white hover:text-black transition-all duration-200"
               >
-                View VIGIL-1 →
+                View VYGIL-1 →
               </button>
             )}
           </motion.div>
@@ -115,7 +115,7 @@ export default function VMBRASystem({ hideButton }: { hideButton?: boolean } = {
               </div>
 
               <div className="absolute bottom-0 left-0 right-0 px-4 py-3 flex justify-between items-center">
-                <span className="text-white/20 text-[8px] tracking-[0.3em] font-mono uppercase">VMBRA // ACTIVE</span>
+                <span className="text-white/20 text-[8px] tracking-[0.3em] font-mono uppercase">UMBRIX // ACTIVE</span>
                 <span className="text-white/20 text-[8px] tracking-[0.2em] font-mono">3 CONTACTS</span>
               </div>
             </div>

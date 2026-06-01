@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
@@ -40,7 +40,7 @@ export default function ATASystem() {
           transition={{ duration: 0.5 }}
           className="text-white/30 text-[10px] tracking-[0.4em] uppercase font-mono mb-16"
         >
-          01 / ATA SYSTEM
+          01 / ATX SYSTEM
         </motion.p>
 
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-start">
@@ -57,7 +57,7 @@ export default function ATASystem() {
               ANNIHILATION
             </h2>
             <p className="text-white/50 text-base leading-relaxed mb-10 max-w-md">
-              The ATA System is Orbotix&apos;s flagship autonomous defense platform. Designed
+              The ATX System is Orbotix&apos;s flagship autonomous defense platform. Designed
               for multi-domain operations, ATA delivers persistent, scalable, and lethal
               autonomous capability across the full spectrum of conflict — without placing
               operators in harm&apos;s way.
@@ -90,7 +90,7 @@ export default function ATASystem() {
               onClick={() => document.querySelector("#wasper-1")?.scrollIntoView({ behavior: "smooth" })}
               className="mt-10 px-8 py-3 border border-white text-white text-xs tracking-[0.25em] uppercase font-bold hover:bg-white hover:text-black transition-all duration-200"
             >
-              View WASPER-1 →
+              View VASPYR-1 →
             </motion.button>
           </motion.div>
 
@@ -100,7 +100,7 @@ export default function ATASystem() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col gap-4"
           >
-            <ImagePlaceholder label="ATA SYSTEM / FIELD DEPLOYMENT" />
+            <ImagePlaceholder label="ATX SYSTEM / FIELD DEPLOYMENT" />
             <div className="grid grid-cols-3 gap-4">
               {["AIR DOMAIN", "GROUND OPS", "MARITIME"].map((label) => (
                 <div key={label} className="aspect-square bg-white/[0.02] flex items-center justify-center">

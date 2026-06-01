@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
@@ -7,23 +7,23 @@ const news = [
   {
     date: "MAY 2, 2026",
     category: "PRESS RELEASE",
-    title: "Orbotix Industries Completes $240M Series C to Accelerate ATA System Production",
+    title: "Orbotix Industries Completes $240M Series C to Accelerate ATX System Production",
     excerpt:
-      "Funding led by Founders Fund and Andreessen Horowitz will expand manufacturing capacity and fast-track WASPER-1 fleet deliveries to U.S. allied partners.",
+      "Funding led by Founders Fund and Andreessen Horowitz will expand manufacturing capacity and fast-track VASPYR-1 fleet deliveries to U.S. allied partners.",
   },
   {
     date: "APR 14, 2026",
     category: "TECHNOLOGY",
-    title: "VIGIL-1 Achieves 72-Hour Continuous Autonomous Flight in Field Evaluation",
+    title: "VYGIL-1 Achieves 72-Hour Continuous Autonomous Flight in Field Evaluation",
     excerpt:
       "The autonomous ISR platform completed its longest uninterrupted mission, validating terrain-following algorithms and onboard edge AI across varied environments.",
   },
   {
     date: "MAR 28, 2026",
     category: "PARTNERSHIP",
-    title: "Orbotix and DoD Sign Multi-Year VMBRA System Integration Contract",
+    title: "Orbotix and DoD Sign Multi-Year UMBRIX System Integration Contract",
     excerpt:
-      "A landmark agreement to deploy VMBRA persistent surveillance architecture across three critical infrastructure sites in the Indo-Pacific theater.",
+      "A landmark agreement to deploy UMBRIX persistent surveillance architecture across three critical infrastructure sites in the Indo-Pacific theater.",
   },
 ];
 

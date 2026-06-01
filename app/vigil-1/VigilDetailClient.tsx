@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import {
@@ -23,7 +23,7 @@ const ModelViewer = dynamic(() => import("@/components/ModelViewer"), {
   ),
 });
 
-// VIGIL-1 GLB의 4개 mesh → 파트 이름·설명 매핑
+// VYGIL-1 GLB의 4개 mesh → 파트 이름·설명 매핑
 // 실제 클릭 테스트 후 이름이 맞지 않으면 key를 교체하면 됩니다
 const VIGIL_PARTS = {
   "o object_1": {
@@ -83,9 +83,9 @@ const features = [
   },
   {
     index: "05",
-    title: "VMBRA INTEGRATION",
+    title: "UMBRIX INTEGRATION",
     subtitle: "Mesh Intelligence Network",
-    body: "Connects with the VMBRA AI visual threat detection system. The V-Station charging hub functions as the central intelligence processor — vehicle-mounted for portable, persistent coverage.",
+    body: "Connects with the UMBRIX AI visual threat detection system. The V-Station charging hub functions as the central intelligence processor — vehicle-mounted for portable, persistent coverage.",
     stat: { value: "V-Station", label: "Hub Integration" },
     tag: "NETWORK",
   },
@@ -214,7 +214,7 @@ function CTASection() {
           transition={{ duration: 0.5 }}
           className="text-white/25 text-[9px] tracking-[0.5em] font-mono uppercase mb-6"
         >
-          ORBOTIX INDUSTRIES / VIGIL-1
+          ORBOTIX INDUSTRIES / VYGIL-1
         </motion.p>
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
@@ -231,7 +231,7 @@ function CTASection() {
           className="text-white/40 text-base leading-relaxed mb-12 max-w-xl mx-auto"
         >
           Contact our team for system specifications, deployment options, and
-          integration with the VMBRA intelligence network.
+          integration with the UMBRIX intelligence network.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -329,7 +329,7 @@ export default function VigilDetailClient() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-white/30 text-[10px] tracking-[0.5em] font-mono uppercase mb-4"
           >
-            ORBOTIX INDUSTRIES / VIGIL-1
+            ORBOTIX INDUSTRIES / VYGIL-1
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
@@ -337,7 +337,7 @@ export default function VigilDetailClient() {
             transition={{ duration: 0.7, delay: 0.45 }}
             className="text-6xl sm:text-7xl lg:text-8xl xl:text-[10rem] font-medium tracking-tighter text-white uppercase leading-none mb-4"
           >
-            VIGIL-1
+            VYGIL-1
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -407,7 +407,7 @@ export default function VigilDetailClient() {
         </div>
       </section>
 
-      {/* ── VMBRA System ─────────────────────────────────────────────────── */}
+      {/* ── UMBRIX System ─────────────────────────────────────────────────── */}
       <VMBRASystem hideButton />
 
       {/* ── Specs ────────────────────────────────────────────────────────── */}

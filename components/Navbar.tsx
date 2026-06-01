@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,15 +12,15 @@ type NavItem =
 
 const navItems: NavItem[] = [
   {
-    label: "ATA SYSTEM",
+    label: "ATX SYSTEM",
     dropdown: [
-        { label: "WASPER-2", href: "/wasper-2" },
+        { label: "VASPYR-2", href: "/wasper-2" },
     ],
   },
   {
-    label: "VMBRA System",
+    label: "UMBRIX System",
     dropdown: [
-      { label: "VIGIL-1", href: "/vigil-1" },
+      { label: "VYGIL-1", href: "/vigil-1" },
     ],
   },
   {

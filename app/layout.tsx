@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 
@@ -11,7 +11,7 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "ORBOTIX INDUSTRIES — Building tomorrow's defense, today",
   description:
-    "Advanced autonomous systems for defense — ATA System, WASPER-1, VMBRA System, VIGIL-1.",
+    "Advanced autonomous systems for defense — ATX System, VASPYR-1, UMBRIX System, VYGIL-1.",
 };
 
 export default function RootLayout({

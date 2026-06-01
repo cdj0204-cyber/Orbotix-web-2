@@ -1,9 +1,9 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import ViewerClient from "@/components/ViewerClient";
 
 export const metadata = {
-  title: "VIGIL-1 — 3D Model Viewer | ORBOTIX INDUSTRIES",
-  description: "Interactive 3D model of the VIGIL-1 autonomous surveillance drone.",
+  title: "VYGIL-1 — 3D Model Viewer | ORBOTIX INDUSTRIES",
+  description: "Interactive 3D model of the VYGIL-1 autonomous surveillance drone.",
 };
 
 export default function ViewerPage() {
@@ -27,7 +27,7 @@ export default function ViewerPage() {
         {/* center label */}
         <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5">
           <span className="text-white text-[11px] tracking-[0.4em] font-mono uppercase">
-            VIGIL-1
+            VYGIL-1
           </span>
           <span className="text-white/25 text-[8px] tracking-[0.3em] font-mono uppercase">
             3D Model Viewer
@@ -70,7 +70,7 @@ export default function ViewerPage() {
       {/* ── Bottom spec bar ──────────────────────────────────────────────── */}
       <footer className="relative z-20 border-t border-white/[0.06] px-6 py-3 flex flex-wrap gap-x-8 gap-y-1">
         {[
-          ["DESIGNATION", "VIGIL-1"],
+          ["DESIGNATION", "VYGIL-1"],
           ["CLASS", "Autonomous Fixed-Wing UAV"],
           ["ENDURANCE", "72 hrs"],
           ["RADIUS", "480 km"],
