@@ -347,8 +347,19 @@ export default function Wasper2DetailClient() {
   return (
     <div className="bg-black">
 
+      {/* ── 0. 메인 이미지 섹션 ───────────────────────────────────────── */}
+      <section className="pt-16 px-4 sm:px-10">
+        <div className="w-full aspect-[1920/900] overflow-hidden">
+          <img
+            src="/image/Wasper/Wasper_Main 4.png"
+            alt="VASPYR-2"
+            className="w-full h-full object-cover object-top"
+          />
+        </div>
+      </section>
+
       {/* ── 1. 히어로 타이틀 섹션 (즉시 표시) ───────────────────────── */}
-      <section className="relative min-h-screen flex flex-col justify-center px-4 sm:px-10 pt-16">
+      <section className="relative min-h-screen flex flex-col justify-center px-4 sm:px-10">
         <div className="flex items-start gap-1 sm:gap-3 lg:gap-4">
 
           {/* 왼쪽 카테고리 라벨 (TITLE) — 오른쪽 첫 번째 줄(ATX SYSTEM) 캡 상단에 정렬 */}
