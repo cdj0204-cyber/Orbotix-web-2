@@ -199,7 +199,8 @@ export default function Wasper2DetailClient() {
   const containerRef    = useRef<HTMLDivElement>(null);
   const canvasRef       = useRef<HTMLCanvasElement>(null);
   // 개별 슬롯으로 관리 — 로드된 프레임만 즉시 접근 가능
-  const framesRef       = useRef<(HTMLImageElement | null)[]>(
+  // ImageBitmap = 사전 디코딩된 비트맵 (재디코딩 없음). 실패 시 HTMLImageElement 폴백.
+  const framesRef       = useRef<(ImageBitmap | HTMLImageElement | null)[]>(
     new Array(FRAME_COUNT).fill(null)
   );
   const currentFrameRef = useRef(0);
@@ -225,7 +226,9 @@ export default function Wasper2DetailClient() {
     if (!frame) return;
 
     const cw = canvas.width,  ch = canvas.height;
-    const fw = frame.naturalWidth, fh = frame.naturalHeight;
+    const isBmp = typeof ImageBitmap !== "undefined" && frame instanceof ImageBitmap;
+    const fw = isBmp ? frame.width  : (frame as HTMLImageElement).naturalWidth;
+    const fh = isBmp ? frame.height : (frame as HTMLImageElement).naturalHeight;
     if (!fw || !fh) return;
 
     const scale = Math.max(cw / fw, ch / fh);
@@ -248,20 +251,41 @@ export default function Wasper2DetailClient() {
     return () => window.removeEventListener("resize", resize);
   }, [drawFrame]);
 
-  // ── 프레임 백그라운드 프리로드 (동시 8개) ────────────────────────────
+  // ── 프레임 백그라운드 프리로드 (동시 6개) ────────────────────────────
   // 로딩 화면 없음 — 유저가 타이틀/스펙을 읽는 동안 조용히 로드
+  // 각 JPEG를 createImageBitmap으로 "사전 디코딩"하여 저장 → 스크롤 중
+  // 재디코딩이 전혀 발생하지 않으므로, 멈췄다 다시 스크롤할 때 렉이 없음.
+  // 동시에 다운스케일하여 메모리 사용량을 크게 줄임(스왑 방지).
   useEffect(() => {
     let cancelled = false;
+
+    // 디바이스별 디코딩 목표 높이 (메모리 ↔ 화질 균형)
+    const isMobile  = window.matchMedia("(max-width: 768px)").matches;
+    const TARGET_H  = isMobile ? 360 : 540;
 
     const loadOne = (i: number): Promise<void> =>
       new Promise((resolve) => {
         const img = new Image();
-        img.onload = () => {
-          if (!cancelled) {
-            framesRef.current[i] = img;
-            // frame 0 준비되면 즉시 canvas에 표시
-            if (i === 0) drawFrame(0);
+        img.decoding = "async";
+        img.onload = async () => {
+          if (cancelled) return resolve();
+          try {
+            // 비율 유지하며 TARGET_H 높이로 다운스케일 디코딩
+            const scale = Math.min(1, TARGET_H / (img.naturalHeight || TARGET_H));
+            const w = Math.max(1, Math.round(img.naturalWidth  * scale));
+            const h = Math.max(1, Math.round(img.naturalHeight * scale));
+            const bmp = await createImageBitmap(img, {
+              resizeWidth: w,
+              resizeHeight: h,
+              resizeQuality: "high",
+            });
+            if (cancelled) { bmp.close(); return resolve(); }
+            framesRef.current[i] = bmp;
+          } catch {
+            // createImageBitmap 미지원/실패 시 HTMLImageElement 폴백
+            if (!cancelled) framesRef.current[i] = img;
           }
+          if (!cancelled && i === 0) drawFrame(0);
           resolve();
         };
         img.onerror = () => resolve();
@@ -275,9 +299,15 @@ export default function Wasper2DetailClient() {
         await loadOne(idx++);
       }
     };
-    Array.from({ length: 8 }, worker);
+    Array.from({ length: 6 }, worker);
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      // 메모리 즉시 해제
+      framesRef.current.forEach((f) => {
+        if (f && typeof ImageBitmap !== "undefined" && f instanceof ImageBitmap) f.close();
+      });
+    };
   }, [drawFrame]);
 
   // ── Lenis + GSAP ScrollTrigger (마운트 즉시 초기화) ──────────────────
