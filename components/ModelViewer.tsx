@@ -231,7 +231,7 @@ export default function ModelViewer({
 
     // ── Render loop ────────────────────────────────────────────────────────
     const clock = new THREE.Clock();
-    let rafId: number;
+    let rafId = 0;
     const animate = () => {
       rafId = requestAnimationFrame(animate);
       animMixer?.update(clock.getDelta());
@@ -252,6 +252,22 @@ export default function ModelViewer({
         el.style.pointerEvents = "auto";
       });
     };
+
+    // 뷰어가 화면 밖이면 렌더 루프를 완전히 정지 → 다른 섹션(스크롤 영상 등)
+    // 스크롤 시 GPU/CPU 점유 제거. 화면에 다시 들어오면 재개.
+    const visObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!rafId) { clock.getDelta(); animate(); } // 누적 delta 버리고 재개
+        } else if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+      },
+      { threshold: 0 }
+    );
+    visObserver.observe(mount);
+
     animate();
 
     // ── Resize ─────────────────────────────────────────────────────────────
@@ -267,6 +283,7 @@ export default function ModelViewer({
     // ── Cleanup ────────────────────────────────────────────────────────────
     return () => {
       selectByKey.current = null;
+      visObserver.disconnect();
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
