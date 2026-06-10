@@ -32,17 +32,12 @@ export default function Newsroom() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="newsroom" className="relative py-28 sm:py-36">
+    <section id="newsroom" className="relative bg-black pt-28 sm:pt-40 pb-28 sm:pb-36">
       <div ref={ref} className="px-10">
-        <div className="flex items-end justify-between mb-16">
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5 }}
-            className="text-white/30 text-[10px] tracking-[0.4em] uppercase font-mono"
-          >
-            03 / NEWSROOM
-          </motion.p>
+        <div className="flex items-end justify-between mb-6 sm:mb-8">
+          <h2 className="text-white text-[25px] font-medium uppercase tracking-normal leading-none">
+            Newsroom
+          </h2>
           <button className="text-white/30 text-[10px] tracking-[0.3em] uppercase hover:text-white transition-colors">
             All News →
           </button>
@@ -55,7 +50,7 @@ export default function Newsroom() {
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.55, delay: i * 0.12 }}
-              className="group bg-white/[0.03] p-7 hover:bg-white/[0.06] transition-all duration-300 cursor-pointer flex flex-col"
+              className="group bg-white/[0.16] p-7 hover:bg-white/[0.24] transition-all duration-300 cursor-pointer flex flex-col"
             >
               <div className="flex items-center justify-between mb-6">
                 <span className="text-white/30 text-[9px] tracking-[0.3em] uppercase font-mono">

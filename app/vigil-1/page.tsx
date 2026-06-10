@@ -1,5 +1,6 @@
 ﻿import { Metadata } from "next";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import VigilDetailClient from "./VigilDetailClient";
 
 export const metadata: Metadata = {
@@ -13,6 +14,7 @@ export default function Vigil1Page() {
     <>
       <Navbar />
       <VigilDetailClient />
+      <Footer />
     </>
   );
 }

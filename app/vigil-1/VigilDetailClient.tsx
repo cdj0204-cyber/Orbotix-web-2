@@ -278,6 +278,17 @@ export default function VigilDetailClient() {
 
   return (
     <div className="overflow-x-hidden relative" style={{ zIndex: 1 }}>
+      {/* ── 0. 메인 렌더링 이미지 ────────────────────────────────────────── */}
+      <section className="pt-16 px-4 sm:px-10">
+        <div className="w-full aspect-[1920/900] overflow-hidden">
+          <img
+            src="/image/Vigil/Vigil%2001.png"
+            alt="VYGIL-1"
+            className="w-full h-full object-cover object-top"
+          />
+        </div>
+      </section>
+
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section
         ref={heroRef}

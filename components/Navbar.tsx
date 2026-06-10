@@ -12,15 +12,17 @@ type NavItem =
 
 const navItems: NavItem[] = [
   {
-    label: "ATX SYSTEM",
+    label: "PRODUCTS",
     dropdown: [
-        { label: "VASPYR-2", href: "/wasper-2" },
+      { label: "VASPYR-2", href: "/wasper-2" },
+      { label: "VYGIL-1", href: "/vigil-1" },
     ],
   },
   {
-    label: "UMBRIX System",
+    label: "SYSTEMS",
     dropdown: [
-      { label: "VYGIL-1", href: "/vigil-1" },
+      { label: "ATX SYSTEM", href: "#" },
+      { label: "UMBRIX SYSTEM", href: "#" },
     ],
   },
   {
@@ -34,6 +36,7 @@ const navItems: NavItem[] = [
 ];
 
 function scrollToAnchor(href: string) {
+  if (!href || href === "#") return;
   const el = document.querySelector(href);
   if (el) el.scrollIntoView({ behavior: "smooth" });
 }
@@ -52,7 +55,7 @@ function NavDropdown({ item }: { item: NavItem & { dropdown: DropdownItem[] } })
 
   return (
     <div className="relative" onMouseEnter={show} onMouseLeave={hide}>
-      <button className="flex items-center gap-1.5 text-xs tracking-widest uppercase font-semibold text-white/70 hover:text-white transition-colors py-1">
+      <button className="flex items-center gap-1.5 text-[15px] tracking-widest uppercase font-medium text-white hover:text-white transition-colors py-1">
         {item.label}
         <svg
           width="10"
@@ -132,7 +135,7 @@ export default function Navbar() {
               <button
                 key={item.label}
                 onClick={() => item.href && scrollToAnchor(item.href)}
-                className="text-xs tracking-widest uppercase font-semibold text-white/70 hover:text-white transition-colors"
+                className="text-[15px] tracking-widest uppercase font-medium text-white hover:text-white transition-colors"
               >
                 {item.label}
               </button>
@@ -142,7 +145,7 @@ export default function Navbar() {
 
         <button
           onClick={() => scrollToAnchor("#contact-cta")}
-          className="hidden md:block px-5 py-2 border border-white text-white text-xs tracking-widest uppercase font-semibold hover:bg-white hover:text-black transition-all duration-200"
+          className="hidden md:block text-white text-[15px] tracking-widest uppercase font-medium underline underline-offset-4 hover:opacity-60 transition-opacity duration-200"
         >
           Contact us
         </button>
@@ -223,7 +226,7 @@ export default function Navbar() {
               ))}
               <button
                 onClick={() => { scrollToAnchor("#contact-cta"); setMobileOpen(false); }}
-                className="mt-3 w-full py-3 border border-white text-white text-xs tracking-widest uppercase font-semibold hover:bg-white hover:text-black transition-all"
+                className="mt-3 w-full py-3 border border-white text-white text-[15px] tracking-widest uppercase font-medium hover:bg-white hover:text-black transition-all"
               >
                 Contact us
               </button>

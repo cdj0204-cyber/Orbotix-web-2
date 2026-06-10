@@ -1,11 +1,9 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import AssetPreloader from "@/components/AssetPreloader";
-import Values from "@/components/Values";
-import WASPER1 from "@/components/WASPER1";
-import VIGIL1 from "@/components/VIGIL1";
+import ProductShowcase from "@/components/ProductShowcase";
+import SystemShowcase from "@/components/SystemShowcase";
 import Newsroom from "@/components/Newsroom";
-import ContactCTA from "@/components/ContactCTA";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -15,11 +13,9 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <Values />
-        <WASPER1 />
-        <VIGIL1 />
+        <ProductShowcase />
+        <SystemShowcase />
         <Newsroom />
-        <ContactCTA />
       </main>
       <Footer />
     </>

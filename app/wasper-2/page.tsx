@@ -1,5 +1,6 @@
 ﻿import { Metadata } from "next";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import Wasper2DetailClient from "./Wasper2DetailClient";
 
 export const metadata: Metadata = {
@@ -12,6 +13,7 @@ export default function Wasper2Page() {
     <>
       <Navbar />
       <Wasper2DetailClient />
+      <Footer />
     </>
   );
 }

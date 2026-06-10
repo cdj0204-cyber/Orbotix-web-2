@@ -1,13 +1,15 @@
 ﻿"use client";
 
-import Image from "next/image";
+import Link from "next/link";
 
 const links = {
+  Products: [
+    { label: "VASPYR-2", href: "/wasper-2" },
+    { label: "VYGIL-1", href: "/vigil-1" },
+  ],
   Systems: [
-    { label: "ATX System", href: "#ata-system" },
-    { label: "VASPYR-1", href: "#wasper-1" },
-    { label: "UMBRIX System", href: "#vmbra-system" },
-    { label: "VYGIL-1", href: "#vigil-1" },
+    { label: "ATX System", href: "#" },
+    { label: "UMBRIX System", href: "#" },
   ],
   Company: [
     { label: "Mission", href: "#mission" },
@@ -35,7 +37,27 @@ const socials = [
     ),
   },
   {
-    name: "X / Twitter",
+    name: "Instagram",
+    href: "#",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+        <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+      </svg>
+    ),
+  },
+  {
+    name: "X",
     href: "#",
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
@@ -44,11 +66,11 @@ const socials = [
     ),
   },
   {
-    name: "GitHub",
+    name: "Facebook",
     href: "#",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
       </svg>
     ),
   },
@@ -63,31 +85,26 @@ function scrollTo(href: string) {
 export default function Footer() {
   return (
     <footer className="relative bg-black pt-16 pb-8">
-      <div className="px-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-14">
-          <div className="col-span-2 md:col-span-1">
+      <div className="px-4 sm:px-10">
+        {/* 카드 섹션과 동일한 2단 레이아웃 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 mb-14">
+          {/* 왼쪽: 브랜드 */}
+          <div>
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="mb-4 block"
+              className="block mb-6"
             >
-              <Image
-                src="/image/Orbotix_Logo_Icon_W.png"
-                alt="Orbotix"
-                width={75}
-                height={26}
-                className="object-contain"
-              />
+              <span className="text-white text-[15px] font-medium uppercase tracking-normal leading-tight">
+                Orbotix Industries
+              </span>
             </button>
-            <p className="text-white/30 text-xs leading-relaxed max-w-[180px]">
-              Advanced autonomous systems for the modern defense landscape.
-            </p>
-            <div className="flex gap-4 mt-6">
+            <div className="flex gap-4">
               {socials.map((s) => (
                 <a
                   key={s.name}
                   href={s.href}
                   aria-label={s.name}
-                  className="text-white/30 hover:text-white transition-colors"
+                  className="text-white hover:text-white/60 transition-colors"
                 >
                   {s.icon}
                 </a>
@@ -95,25 +112,37 @@ export default function Footer() {
             </div>
           </div>
 
-          {Object.entries(links).map(([group, items]) => (
-            <div key={group}>
-              <p className="text-white text-[10px] tracking-[0.3em] uppercase font-bold mb-5">
-                {group}
-              </p>
-              <ul className="space-y-3">
-                {items.map((item) => (
-                  <li key={item.label}>
-                    <button
-                      onClick={() => scrollTo(item.href)}
-                      className="text-white/40 text-xs tracking-wide hover:text-white transition-colors"
-                    >
-                      {item.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* 오른쪽: 링크 그룹 (Products / Systems / Company / Legal) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-8">
+            {Object.entries(links).map(([group, items]) => (
+              <div key={group}>
+                <p className="text-white text-[15px] font-medium uppercase tracking-normal leading-tight mb-3">
+                  {group}
+                </p>
+                <ul className="space-y-1">
+                  {items.map((item) => (
+                    <li key={item.label}>
+                      {item.href.startsWith("/") ? (
+                        <Link
+                          href={item.href}
+                          className="text-white text-[15px] font-medium uppercase tracking-normal leading-tight hover:opacity-60 transition-opacity"
+                        >
+                          {item.label}
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => scrollTo(item.href)}
+                          className="text-white text-[15px] font-medium uppercase tracking-normal leading-tight hover:opacity-60 transition-opacity"
+                        >
+                          {item.label}
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">

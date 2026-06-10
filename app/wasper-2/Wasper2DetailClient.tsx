@@ -4,6 +4,9 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import dynamic from "next/dynamic";
+
+const ModelViewer = dynamic(() => import("@/components/ModelViewer"), { ssr: false });
 
 // ── 상수 ─────────────────────────────────────────────────────────────
 const FRAME_COUNT  = 318;
@@ -202,6 +205,8 @@ export default function Wasper2DetailClient() {
   const currentFrameRef = useRef(0);
   const overlayRefs     = useRef<(HTMLDivElement | null)[]>([]);
   const prevOpacityRef  = useRef<number[]>(OVERLAYS.map(() => 0));
+  // 진입 시 블랙 → 영상 페이드용 오버레이
+  const fadeRef         = useRef<HTMLDivElement>(null);
 
   // ── Canvas: object-fit:cover 드로우 ──────────────────────────────────
   // 해당 인덱스 프레임이 없으면 가장 가까운 이전 프레임으로 대체
@@ -290,6 +295,20 @@ export default function Wasper2DetailClient() {
     gsap.ticker.lagSmoothing(0);
 
     const ctx = gsap.context(() => {
+      // 진입 페이드: 섹션이 화면 아래에서 올라오기 시작해 상단 고정 이후까지
+      // 2화면 구간에 걸쳐 블랙 오버레이를 1 → 0 으로 스크럽 (기존보다 2배 느린 전환)
+      ScrollTrigger.create({
+        trigger: container,
+        start: "top bottom",
+        end: () => "+=" + window.innerHeight * 2,
+        scrub: true,
+        onUpdate: (self) => {
+          if (fadeRef.current) {
+            fadeRef.current.style.opacity = String(1 - self.progress);
+          }
+        },
+      });
+
       ScrollTrigger.create({
         trigger: container,
         start: "top top",
@@ -398,7 +417,7 @@ export default function Wasper2DetailClient() {
       </section>
 
       {/* ── 2. 스펙 + 기능 섹션 (즉시 표시) ─────────────────────────── */}
-      <section className="bg-black py-16 sm:py-28 lg:py-36 px-4 sm:px-10">
+      <section className="bg-black pt-16 sm:pt-28 lg:pt-36 pb-32 sm:pb-56 lg:pb-72 px-4 sm:px-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 items-start">
 
           {/* ── SPEC 단 ── */}
@@ -471,6 +490,13 @@ export default function Wasper2DetailClient() {
             }}
           />
 
+          {/* 진입 페이드 블랙 오버레이 (스크롤로 1→0) */}
+          <div
+            ref={fadeRef}
+            className="absolute inset-0 pointer-events-none bg-black"
+            style={{ zIndex: 8, opacity: 1 }}
+          />
+
           {/* 하단 그라데이션 */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -529,6 +555,15 @@ export default function Wasper2DetailClient() {
 
         </div>
       </div>
+
+      {/* ── 4. 3D 모델 뷰어 ──────────────────────────────────────────────── */}
+      <section className="bg-black" style={{ height: "100vh" }}>
+        <ModelViewer
+          modelPath="/models/wasper_compressed.glb"
+          cameraZ={2.2}
+          rotationY={0}
+        />
+      </section>
 
     </div>
   );
