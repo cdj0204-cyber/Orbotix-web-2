@@ -55,11 +55,6 @@ export default function ProductShowcase() {
               }}
             />
 
-            {/* 상단 카테고리 라벨 */}
-            <span className="absolute top-6 left-6 sm:top-8 sm:left-8 text-white text-[11px] sm:text-xs font-semibold tracking-[0.25em] uppercase">
-              {p.category}
-            </span>
-
             {/* 하단 타이틀 + 버튼 */}
             <div className="absolute bottom-7 left-6 sm:bottom-10 sm:left-8 right-6">
               <h3 className="text-white text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tighter uppercase leading-none mb-2">
@@ -77,10 +72,10 @@ export default function ProductShowcase() {
                   View Details
                 </Link>
                 <Link
-                  href={p.href}
+                  href="#"
                   className="px-7 sm:px-9 py-2.5 bg-black/30 backdrop-blur-sm border border-white/40 text-white text-[11px] sm:text-xs font-semibold tracking-widest uppercase hover:bg-white hover:text-black hover:border-white transition-all"
                 >
-                  Learn More
+                  Ask Quote
                 </Link>
               </div>
             </div>
