@@ -73,7 +73,7 @@ const VideoBackground = memo(function VideoBackground() {
           transform: "translateZ(0)",
         }}
       >
-        <source src="/video/Main%20page/main%20video_1_webm.webm" type="video/webm" />
+        <source src="/video/Main%20page/main%20video_2.mp4" type="video/mp4" />
       </video>
 
       {/* 다크 오버레이 */}
