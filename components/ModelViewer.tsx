@@ -301,7 +301,9 @@ export default function ModelViewer({
   const partInfo = selectedKey ? parts?.[selectedKey] : null;
 
   return (
-    <div className="relative w-full h-full">
+    // data-lenis-prevent-touch: Lenis syncTouch가 켜진 페이지(예: wasper-3)에서 이 영역의
+    // 터치를 가로채지 않도록 → 모바일에서 OrbitControls 회전이 정상 동작
+    <div className="relative w-full h-full" data-lenis-prevent-touch="">
       {/* Three.js canvas */}
       <div ref={mountRef} className="w-full h-full" />
 

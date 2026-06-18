@@ -316,8 +316,14 @@ export default function Wasper3DetailClient() {
 
     gsap.registerPlugin(ScrollTrigger);
 
-    // lerp 0.3: 손 떼면 더 빠르게 감속(1번) — 글라이드 꼬리를 짧게, 멈추면 70ms 뒤 정수 프레임으로 고정
-    const lenis = new Lenis({ lerp: 0.3 });
+    // 모바일(터치)은 데스크탑보다 빠르게 멈추게 — syncTouch로 터치 관성을 Lenis가 제어:
+    //   touchInertiaExponent↓(코스트 감소) + syncTouchLerp↑(빠른 수렴). 데스크탑은 휠 lerp 0.3 유지.
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    const lenis = new Lenis(
+      isTouch
+        ? { lerp: 0.3, syncTouch: true, syncTouchLerp: 0.12, touchInertiaExponent: 1.2 }
+        : { lerp: 0.3 }
+    );
     lenis.on("scroll", ScrollTrigger.update);
     const lenisRaf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(lenisRaf);
