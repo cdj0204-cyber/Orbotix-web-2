@@ -9,8 +9,8 @@ import dynamic from "next/dynamic";
 const ModelViewer = dynamic(() => import("@/components/ModelViewer"), { ssr: false });
 
 // ── 상수 ─────────────────────────────────────────────────────────────
-const FRAME_COUNT  = 316;
-const SCROLL_TOTAL = 30000;
+const FRAME_COUNT  = 799;
+const SCROLL_TOTAL = 28000;   // 474프레임을 매핑하는 스크롤 거리 (작을수록 스크롤당 프레임이 빨라짐)
 const FADE         = 200;
 
 const FRAME_URL = (n: number) =>
@@ -20,8 +20,8 @@ const FRAME_URL = (n: number) =>
 const OVERLAYS = [
   {
     id: "airframe",
-    scrollAt: 4000,
-    holdFor: 3500,
+    scrollAt: 3733,
+    holdFor: 3267,
     side: "right" as const,
     label: "01 / STRUCTURE",
     title: "Gen 2.0\nAirframe",
@@ -29,8 +29,8 @@ const OVERLAYS = [
   },
   {
     id: "payload",
-    scrollAt: 11000,
-    holdFor: 2000,
+    scrollAt: 10267,
+    holdFor: 1867,
     side: "right" as const,
     label: "02 / PAYLOAD",
     title: "Modular\nWarhead",
@@ -38,8 +38,8 @@ const OVERLAYS = [
   },
   {
     id: "propulsion",
-    scrollAt: 15000,
-    holdFor: 2000,
+    scrollAt: 14000,
+    holdFor: 1867,
     side: "right" as const,
     label: "03 / PROPULSION",
     title: "Dual-Motor\nRedundancy",
@@ -47,8 +47,8 @@ const OVERLAYS = [
   },
   {
     id: "overview",
-    scrollAt: 22000,
-    holdFor: 2500,
+    scrollAt: 20533,
+    holdFor: 2333,
     side: "right" as const,
     label: "04 / OVERVIEW",
     title: "Gen 2.0\nUAV",
@@ -202,36 +202,64 @@ export default function Wasper3DetailClient() {
   const framesRef       = useRef<(HTMLImageElement | null)[]>(
     new Array(FRAME_COUNT).fill(null)
   );
-  const currentFrameRef = useRef(0);
+  const currentFrameRef = useRef(0);   // 마지막으로 그린 소수점 프레임 위치 (정수 아님)
   const overlayRefs     = useRef<(HTMLDivElement | null)[]>([]);
   const prevOpacityRef  = useRef<number[]>(OVERLAYS.map(() => 0));
   // 진입 시 블랙 → 영상 페이드용 오버레이
   const fadeRef         = useRef<HTMLDivElement>(null);
 
-  // ── Canvas: object-fit:cover 드로우 ──────────────────────────────────
-  // 해당 인덱스 프레임이 없으면 가장 가까운 이전 프레임으로 대체
-  const drawFrame = useCallback((index: number) => {
+  // ── Canvas: object-fit:cover + 인접 프레임 크로스 블렌딩 ──────────────
+  // 소수점 위치 f를 받아 floor/ceil 두 프레임을 비율 t로 겹쳐 그린다.
+  // 느린 감속 구간에서도 프레임 사이가 '탁탁' 끊기지 않고 연속적으로 이어진다.
+  const drawFrame = useCallback((f: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let frame = framesRef.current[index];
-    if (!frame) {
-      for (let i = index - 1; i >= 0; i--) {
-        if (framesRef.current[i]) { frame = framesRef.current[i]; break; }
+    const maxIdx = FRAME_COUNT - 1;
+    const pos = Math.max(0, Math.min(f, maxIdx));
+    const i0  = Math.floor(pos);
+    const i1  = Math.min(i0 + 1, maxIdx);
+    const t   = pos - i0;
+
+    // 해당 인덱스가 아직 로드 전이면 가장 가까운 이전 프레임으로 대체
+    const resolve = (idx: number): HTMLImageElement | null => {
+      let frame = framesRef.current[idx];
+      if (!frame) {
+        for (let i = idx - 1; i >= 0; i--) {
+          if (framesRef.current[i]) { frame = framesRef.current[i]; break; }
+        }
+      }
+      return frame;
+    };
+
+    const cw = canvas.width, ch = canvas.height;
+    const drawCover = (img: HTMLImageElement) => {
+      const fw = img.naturalWidth, fh = img.naturalHeight;
+      if (!fw || !fh) return;
+      const scale = Math.max(cw / fw, ch / fh);
+      const sw = fw * scale, sh = fh * scale;
+      const dx = (cw - sw) / 2, dy = (ch - sh) / 2;
+      ctx.drawImage(img, dx, dy, sw, sh);
+    };
+
+    const frame0 = resolve(i0);
+    if (!frame0) return;
+
+    // 베이스 프레임(불투명) — cover라 캔버스를 가득 덮으므로 clear 불필요
+    ctx.globalAlpha = 1;
+    drawCover(frame0);
+
+    // 다음 프레임을 비율 t로 덧그려 크로스페이드 (i0*(1-t) + i1*t)
+    if (t > 0.001 && i1 !== i0) {
+      const frame1 = resolve(i1);
+      if (frame1 && frame1 !== frame0) {
+        ctx.globalAlpha = t;
+        drawCover(frame1);
+        ctx.globalAlpha = 1;
       }
     }
-    if (!frame) return;
-
-    const cw = canvas.width,  ch = canvas.height;
-    const fw = frame.naturalWidth, fh = frame.naturalHeight;
-    if (!fw || !fh) return;
-
-    const scale = Math.max(cw / fw, ch / fh);
-    const sw = fw * scale, sh = fh * scale;
-    const dx = (cw - sw) / 2, dy = (ch - sh) / 2;
-    ctx.drawImage(frame, dx, dy, sw, sh);
   }, []);
 
   // ── Canvas 리사이즈 ───────────────────────────────────────────────────
@@ -288,7 +316,8 @@ export default function Wasper3DetailClient() {
 
     gsap.registerPlugin(ScrollTrigger);
 
-    const lenis = new Lenis({ lerp: 0.08 });
+    // lerp 0.3: 손 떼면 더 빠르게 감속(1번) — 글라이드 꼬리를 짧게, 멈추면 70ms 뒤 정수 프레임으로 고정
+    const lenis = new Lenis({ lerp: 0.3 });
     lenis.on("scroll", ScrollTrigger.update);
     const lenisRaf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(lenisRaf);
@@ -315,14 +344,12 @@ export default function Wasper3DetailClient() {
         end: `+=${SCROLL_TOTAL}`,
         scrub: true,
         onUpdate: (self) => {
-          // 프레임 인덱스 → Canvas 드로우
-          const frameIdx = Math.min(
-            Math.round(self.progress * (FRAME_COUNT - 1)),
-            FRAME_COUNT - 1,
-          );
-          if (frameIdx !== currentFrameRef.current) {
-            currentFrameRef.current = frameIdx;
-            drawFrame(frameIdx);
+          // 프레임 위치(소수점) → 인접 프레임 크로스 블렌딩 드로우
+          // 변화가 미세할 땐(< 0.0015 프레임) 다시 그리지 않음.
+          const f = self.progress * (FRAME_COUNT - 1);
+          if (Math.abs(f - currentFrameRef.current) > 0.0015) {
+            currentFrameRef.current = f;
+            drawFrame(f);              // 스냅 없음 — 멈추면 그 소수점 위치 그대로 정지
           }
 
           // 오버레이 opacity + 타자 효과
