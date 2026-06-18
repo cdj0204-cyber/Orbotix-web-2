@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
     dropdown: [
       { label: "VASPYR-2", href: "/wasper-2" },
       { label: "VASPYR-3", href: "/wasper-3" },
+      { label: "VASPYR-4", href: "/wasper-4" },
       { label: "VYGIL-1", href: "/vigil-1" },
     ],
   },
