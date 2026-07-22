@@ -7,17 +7,17 @@ const news = [
   {
     date: "MAY 2, 2026",
     title: "Orbotix Industries Completes $240M Series C to Accelerate ATX System Production",
-    image: "/image/ATA%20system/ATA%20system_main.png",
+    image: "/image/Newsroom/1.png",
   },
   {
     date: "APR 14, 2026",
     title: "VYGIL-1 Achieves 72-Hour Continuous Autonomous Flight in Field Evaluation",
-    image: "/image/Vigil/Vigil%2001.png",
+    image: "/image/Newsroom/2.png",
   },
   {
     date: "MAR 28, 2026",
     title: "Orbotix and DoD Sign Multi-Year UMBRIX System Integration Contract",
-    image: "/image/VMBRA%20system/VMBRA_main.png",
+    image: "/image/Newsroom/3.png",
   },
 ];
 
@@ -41,7 +41,7 @@ export default function Newsroom() {
           Newsroom
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 sm:gap-x-6 items-start">
           {/* ── 왼쪽 단 ── */}
           <div>
             <p className="text-white text-base sm:text-lg leading-relaxed mb-6">
@@ -61,25 +61,25 @@ export default function Newsroom() {
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.55, delay: i * 0.12 }}
-              className={`group grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 sm:gap-8 items-start pb-4 sm:pb-5 cursor-pointer ${
+              className={`group grid grid-cols-1 sm:grid-cols-[1fr_auto] lg:grid-cols-5 gap-6 sm:gap-8 lg:gap-x-4 items-start pb-4 sm:pb-5 cursor-pointer ${
                 i === 0 ? "" : "border-t border-white pt-4 sm:pt-5"
               } ${i === news.length - 1 ? "border-b" : ""}`}
             >
-              <div>
-                <h3 className="text-white text-base sm:text-lg font-medium tracking-tight leading-snug mb-4 sm:mb-6 underline-offset-4 group-hover:underline">
+              <div className="lg:col-span-4">
+                <h3 className="inline text-white text-base sm:text-lg font-medium tracking-tight leading-snug mb-4 sm:mb-6 underline-offset-4 hover:underline">
                   {item.title}
                 </h3>
 
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-6 mt-4 sm:mt-6">
                   <span className="text-white text-base sm:text-lg">{item.date}</span>
-                  <span className="flex items-center gap-2 text-white text-base sm:text-lg">
+                  <span className="inline-flex items-center gap-2 text-white text-base sm:text-lg underline-offset-4 hover:underline">
                     Read More
                     <ArrowIcon />
                   </span>
                 </div>
               </div>
 
-              <div className="relative w-full sm:w-[160px] lg:w-[200px] aspect-[4/3] overflow-hidden shrink-0">
+              <div className="relative w-full sm:w-[160px] lg:w-full lg:col-span-1 aspect-[4/3] overflow-hidden shrink-0 border border-white">
                 <img
                   src={item.image}
                   alt={item.title}
