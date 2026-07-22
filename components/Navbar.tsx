@@ -12,7 +12,7 @@ type NavItem =
 
 const navItems: NavItem[] = [
   {
-    label: "PRODUCTS",
+    label: "TECHNOLOGY",
     dropdown: [
       { label: "VASPYR-2", href: "/wasper-2" },
       { label: "VASPYR-3", href: "/wasper-3" },
@@ -21,17 +21,22 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    label: "SYSTEMS",
+    label: "SOLUTION",
     dropdown: [
       { label: "ATX SYSTEM", href: "#" },
       { label: "UMBRIX SYSTEM", href: "#" },
     ],
   },
   {
-    label: "ABOUT US",
+    label: "COMPANY",
     dropdown: [
       { label: "Mission", href: "#mission" },
       { label: "Leadership", href: "#leadership" },
+    ],
+  },
+  {
+    label: "INSIGHT",
+    dropdown: [
       { label: "Newsroom", href: "#newsroom" },
     ],
   },

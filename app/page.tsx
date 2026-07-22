@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import AssetPreloader from "@/components/AssetPreloader";
+import Strategy from "@/components/Strategy";
 import ProductShowcase from "@/components/ProductShowcase";
 import SystemShowcase from "@/components/SystemShowcase";
 import Newsroom from "@/components/Newsroom";
@@ -13,6 +14,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
+        <Strategy />
         <ProductShowcase />
         <SystemShowcase />
         <Newsroom />

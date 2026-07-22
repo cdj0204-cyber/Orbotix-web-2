@@ -1,312 +1,99 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import VideoBackground from "@/components/VideoBackground";
 
-const WAVE_R        = 220;
-const MAX_DISP      = 7;
-const PAD_Y         = 20;
-const DIGIT_SIZE    = 10;  // 0/1 고정 폰트 크기 (px)
-const GRID_PX       = 7;   // 그리드 셀 간격 (px)
-const DENSITY_STEPS = 10;  // 밀도 단계 수
+/* ── Scale the headline so it exactly fills the container width ──── */
+function useFitLineWidth(active: boolean) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLHeadingElement>(null);
+  const [fontSize, setFontSize] = useState<number | null>(null);
 
-/* ── Pixel-wave text ─────────────────────────────────────────────── */
-function WaveText({ text, className }: { text: string; className?: string }) {
-  const wrapperRef = useRef<HTMLSpanElement>(null);
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const charRefs   = useRef<(HTMLSpanElement | null)[]>([]);
-  const mouse      = useRef({ x: -9999, y: -9999 });
-  const moveTime   = useRef(0);
-  const curY       = useRef<number[]>([]);
-  const rafId      = useRef(0);
-  const fontStr    = useRef("");
-  const colorStr   = useRef("#fff");
-  const spriteMap  = useRef<Map<string, HTMLCanvasElement>>(new Map());
-  const chars      = Array.from(text);
+  useEffect(() => {
+    if (!active) {
+      setFontSize(null);
+      return;
+    }
+    const container = containerRef.current;
+    const text = textRef.current;
+    if (!container || !text) return;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const animate = useCallback(() => {
-    const elapsed = (Date.now() - moveTime.current) / 1000;
-    const canvas  = canvasRef.current;
-    const wrapper = wrapperRef.current;
-
-    if (canvas && wrapper) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const wr = wrapper.getBoundingClientRect();
-
-        charRefs.current.forEach((el, i) => {
-          if (!el) return;
-          const ch   = el.textContent || "";
-          const r    = el.getBoundingClientRect();
-          const cx   = r.left + r.width  / 2;
-          const cy   = r.top  + r.height / 2;
-          const dist = Math.hypot(cx - mouse.current.x, cy - mouse.current.y);
-
-          // wave spring
-          let target = 0;
-          if (dist < WAVE_R && elapsed < 1.4) {
-            const decay = Math.exp(-elapsed * 3.2);
-            const prox  = 1 - dist / WAVE_R;
-            const phase = dist / 26 - elapsed * 9;
-            target = Math.sin(phase) * prox * decay * MAX_DISP;
-          }
-          curY.current[i] = (curY.current[i] ?? 0) + (target - (curY.current[i] ?? 0)) * 0.28;
-          const yOff = curY.current[i];
-
-          const active = ch !== " " && dist < WAVE_R && elapsed < 1.4 && Math.abs(yOff) > 0.5;
-
-          if (active) {
-            el.style.opacity   = "0";
-            el.style.transform = "";
-
-            // 거리 기반 밀도: 가까울수록 성기게(0), 멀수록 촘촘하게(1)
-            const densityStep = Math.round((dist / WAVE_R) * DENSITY_STEPS);
-            const showProb    = 0.5 + (densityStep / DENSITY_STEPS) * 0.5; // 0.5(근처) → 1.0(멀리)
-            const key = `${ch.toUpperCase()}|${densityStep}|${Math.round(r.width)}|${Math.round(r.height)}`;
-
-            let sprite = spriteMap.current.get(key);
-            if (!sprite) {
-              const fullW = Math.max(1, Math.ceil(r.width));
-              const fullH = Math.max(1, Math.ceil(r.height));
-
-              // 1) 문자를 풀 사이즈로 렌더링 → 픽셀 커버리지 샘플링용
-              const sampleCv = document.createElement("canvas");
-              sampleCv.width  = fullW;
-              sampleCv.height = fullH;
-              const sc = sampleCv.getContext("2d");
-              if (sc && fontStr.current) {
-                sc.font         = fontStr.current;
-                sc.fillStyle    = "#ffffff";
-                sc.textBaseline = "middle";
-                sc.fillText(ch.toUpperCase(), 0, fullH / 2);
-              }
-              const imgData = sc?.getImageData(0, 0, fullW, fullH);
-
-              // 2) 고정 크기 0/1을 확률적으로 배치 → 밀도로 성김/촘촘함 표현
-              sprite = document.createElement("canvas");
-              sprite.width  = fullW;
-              sprite.height = fullH;
-              const tc = sprite.getContext("2d");
-              if (tc && imgData) {
-                tc.font         = `${DIGIT_SIZE}px monospace`;
-                tc.fillStyle    = colorStr.current;
-                tc.textBaseline = "top";
-                const cols = Math.ceil(fullW / GRID_PX);
-                const rows = Math.ceil(fullH / GRID_PX);
-                for (let row = 0; row < rows; row++) {
-                  for (let col = 0; col < cols; col++) {
-                    const sx = Math.min(fullW - 1, Math.floor(col * GRID_PX + GRID_PX / 2));
-                    const sy = Math.min(fullH - 1, Math.floor(row * GRID_PX + GRID_PX / 2));
-                    const alpha = imgData.data[(sy * fullW + sx) * 4 + 3];
-                    if (alpha > 40 && Math.random() < showProb) {
-                      tc.fillText(Math.random() > 0.5 ? "0" : "1", col * GRID_PX, row * GRID_PX);
-                    }
-                  }
-                }
-              }
-              spriteMap.current.set(key, sprite);
-            }
-
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(sprite, r.left - wr.left, r.top - wr.top + PAD_Y + yOff, r.width, r.height);
-          } else {
-            el.style.opacity   = "1";
-            el.style.transform = Math.abs(yOff) > 0.05 ? `translateY(${yOff.toFixed(2)}px)` : "";
-          }
-        });
+    const BASE = 100; // reference px used to measure natural (unscaled) width
+    const recalc = () => {
+      const prevInlineFont = text.style.fontSize;
+      text.style.fontSize = `${BASE}px`;
+      const naturalWidth = text.scrollWidth;
+      const available = container.clientWidth;
+      text.style.fontSize = prevInlineFont;
+      if (naturalWidth > 0 && available > 0) {
+        setFontSize((available / naturalWidth) * BASE);
       }
+    };
+
+    recalc();
+    const ro = new ResizeObserver(recalc);
+    ro.observe(container);
+
+    // Web fonts can finish loading after this first measurement, which
+    // silently changes the text's natural width and throws off the fit.
+    let cancelled = false;
+    if (document.fonts && document.fonts.status !== "loaded") {
+      document.fonts.ready.then(() => {
+        if (!cancelled) recalc();
+      });
     }
 
-    rafId.current = requestAnimationFrame(animate);
-  }, []);
-
-  // Sync canvas dimensions when text size changes (responsive)
-  useEffect(() => {
-    const canvas  = canvasRef.current;
-    const wrapper = wrapperRef.current;
-    if (!canvas || !wrapper) return;
-
-    const sync = () => {
-      const w = wrapper.clientWidth;
-      const h = wrapper.clientHeight;
-      canvas.width  = w;
-      canvas.height = h + PAD_Y * 2;
-      canvas.style.position      = "absolute";
-      canvas.style.left          = "0";
-      canvas.style.top           = `-${PAD_Y}px`;
-      canvas.style.width         = `${w}px`;
-      canvas.style.height        = `${h + PAD_Y * 2}px`;
-      canvas.style.pointerEvents = "none";
-      canvas.style.zIndex        = "2";
-      spriteMap.current.clear();
-
-      const el = charRefs.current.find(e => e && e.textContent !== " ");
-      if (el) {
-        const s = window.getComputedStyle(el);
-        fontStr.current  = `${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
-        colorStr.current = s.color;
-      }
-    };
-
-    const ro = new ResizeObserver(sync);
-    ro.observe(wrapper);
-    sync();
-    return () => ro.disconnect();
-  }, []);
-
-  useEffect(() => {
-    curY.current = new Array(chars.length).fill(0);
-    const onMove = (e: MouseEvent) => {
-      mouse.current    = { x: e.clientX, y: e.clientY };
-      moveTime.current = Date.now();
-    };
-    window.addEventListener("mousemove", onMove, { passive: true });
-    rafId.current = requestAnimationFrame(animate);
     return () => {
-      window.removeEventListener("mousemove", onMove);
-      cancelAnimationFrame(rafId.current);
+      cancelled = true;
+      ro.disconnect();
     };
-  }, [animate, chars.length]);
+  }, [active]);
 
-  return (
-    <span ref={wrapperRef} className={className} style={{ display: "inline-block", position: "relative" }}>
-      <canvas ref={canvasRef} />
-      {chars.map((char, i) => (
-        <span
-          key={i}
-          ref={el => { charRefs.current[i] = el; }}
-          style={{ display: "inline-block", willChange: "transform" }}
-        >
-          {char === " " ? " " : char}
-        </span>
-      ))}
-    </span>
-  );
-}
-
-/* ── Crosshair cursor (hero + values, fades at transition) ───────── */
-function CrosshairCursor() {
-  const hRef   = useRef<HTMLDivElement>(null);
-  const vRef   = useRef<HTMLDivElement>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
-  const txtRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const setFade = (lineAlpha: number, boxAlpha: number, txtAlpha: number) => {
-      if (hRef.current)   hRef.current.style.opacity   = String(lineAlpha);
-      if (vRef.current)   vRef.current.style.opacity   = String(lineAlpha);
-      if (boxRef.current) boxRef.current.style.opacity = String(boxAlpha);
-      if (txtRef.current) txtRef.current.style.opacity = String(txtAlpha);
-    };
-
-    const applyPosition = (x: number, y: number) => {
-      const hero  = document.getElementById("hero");
-      const vals  = document.getElementById("values-section");
-      const hRect = hero?.getBoundingClientRect();
-      const vRect = vals?.getBoundingClientRect();
-
-      const inHero   = hRect && x >= hRect.left && x <= hRect.right && y >= hRect.top   && y <= hRect.bottom;
-      const inValues = vRect && x >= vRect.left && x <= vRect.right && y >= vRect.top   && y <= vRect.bottom;
-
-      if (!inHero && !inValues) { setFade(0, 0, 0); return; }
-
-      // Gradient fade: full opacity in hero, fades to 0 through the values section
-      let fade = 1;
-      if (inValues && vRect) {
-        fade = Math.max(0, 1 - (y - vRect.top) / vRect.height);
-      }
-
-      if (hRef.current)   hRef.current.style.transform   = `translateY(${y}px)`;
-      if (vRef.current)   vRef.current.style.transform   = `translateX(${x}px)`;
-      if (boxRef.current) boxRef.current.style.transform = `translate(${x - 5}px,${y - 5}px)`;
-
-      if (txtRef.current) {
-        const tx = x > window.innerWidth  - 120 ? x - 106 : x + 14;
-        const ty = y > window.innerHeight -  50 ? y -  38 : y + 10;
-        txtRef.current.style.transform = `translate(${tx}px,${ty}px)`;
-        txtRef.current.innerHTML =
-          `<div>${String(Math.round(y)).padStart(4, "0")} px</div>` +
-          `<div>${String(Math.round(x)).padStart(4, "0")} px</div>`;
-      }
-
-      setFade(0.8 * fade, 1.0 * fade, 0.8 * fade);
-    };
-
-    // ── Mouse ──────────────────────────────────────────────────────
-    const onMouseMove = (e: MouseEvent) => applyPosition(e.clientX, e.clientY);
-
-    // ── Touch ──────────────────────────────────────────────────────
-    const onTouch = (e: TouchEvent) => {
-      const t = e.touches[0];
-      if (!t) return;
-      applyPosition(t.clientX, t.clientY);
-    };
-    const onTouchEnd = () => setFade(0, 0, 0);
-
-    window.addEventListener("mousemove",  onMouseMove, { passive: true });
-    window.addEventListener("touchstart", onTouch,     { passive: true });
-    window.addEventListener("touchmove",  onTouch,     { passive: true });
-    window.addEventListener("touchend",   onTouchEnd,  { passive: true });
-
-    return () => {
-      window.removeEventListener("mousemove",  onMouseMove);
-      window.removeEventListener("touchstart", onTouch);
-      window.removeEventListener("touchmove",  onTouch);
-      window.removeEventListener("touchend",   onTouchEnd);
-    };
-  }, []);
-
-  const base: React.CSSProperties = {
-    position: "fixed", opacity: 0, pointerEvents: "none",
-    willChange: "transform", zIndex: 9000,
-  };
-
-  return (
-    <>
-      <div ref={hRef}   style={{ ...base, left: 0, right: 0,  top: 0, height: "1px", backgroundColor: "rgba(255,255,255,0.8)" }} />
-      <div ref={vRef}   style={{ ...base, top: 0,  bottom: 0, left: 0, width: "1px",  backgroundColor: "rgba(255,255,255,0.8)" }} />
-      <div ref={boxRef} style={{ ...base, top: 0,  left: 0,   width: "10px", height: "10px", border: "1px solid rgba(255,255,255,1.0)" }} />
-      <div ref={txtRef} style={{ ...base, top: 0,  left: 0,   fontFamily: "'Montserrat',sans-serif", fontSize: "9px", fontWeight: 300, letterSpacing: "0.12em", color: "rgba(255,255,255,0.8)", lineHeight: "1.7", whiteSpace: "nowrap", textAlign: "left" }} />
-    </>
-  );
+  return { containerRef, textRef, fontSize };
 }
 
 /* ── Hero section ────────────────────────────────────────────────── */
 export default function Hero() {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  const { containerRef, textRef, fontSize } = useFitLineWidth(isDesktop);
+
   return (
     <section
       id="hero"
       className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 sm:px-10"
     >
       <VideoBackground />
-      <CrosshairCursor />
 
-      <div className="relative max-w-5xl mx-auto" style={{ zIndex: 20 }}>
+      <div ref={containerRef} className="relative w-full" style={{ zIndex: 20 }}>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-white/40 text-sm tracking-normal uppercase font-medium mb-6"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-[clamp(33px,3.2vw,90px)] font-medium text-white tracking-tighter leading-none uppercase lg:whitespace-nowrap"
+          style={isDesktop && fontSize ? { fontSize: `${fontSize}px` } : undefined}
         >
-          <WaveText text="ORBOTIX INDUSTRIES" />
+          Orbotix Industries
         </motion.p>
 
         <motion.h1
+          ref={textRef}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.45 }}
-          className="text-5xl sm:text-7xl lg:text-8xl xl:text-[96px] font-medium text-white tracking-tighter leading-none uppercase"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-[clamp(33px,3.2vw,90px)] font-medium text-white tracking-tighter leading-none uppercase lg:whitespace-nowrap"
+          style={isDesktop && fontSize ? { fontSize: `${fontSize}px` } : undefined}
         >
-          <WaveText text="Building" />
-          <br />
-          <WaveText text="tomorrow's" />
-          <br />
-          <WaveText text="defense," />
-          <br />
-          <WaveText text="today." />
+          Building tomorrow&apos;s defense, today.
         </motion.h1>
       </div>
 
