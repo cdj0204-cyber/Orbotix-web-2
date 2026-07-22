@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
@@ -6,76 +6,89 @@ import { motion, useInView } from "framer-motion";
 const news = [
   {
     date: "MAY 2, 2026",
-    category: "PRESS RELEASE",
     title: "Orbotix Industries Completes $240M Series C to Accelerate ATX System Production",
-    excerpt:
-      "Funding led by Founders Fund and Andreessen Horowitz will expand manufacturing capacity and fast-track VASPYR-1 fleet deliveries to U.S. allied partners.",
+    image: "/image/ATA%20system/ATA%20system_main.png",
   },
   {
     date: "APR 14, 2026",
-    category: "TECHNOLOGY",
     title: "VYGIL-1 Achieves 72-Hour Continuous Autonomous Flight in Field Evaluation",
-    excerpt:
-      "The autonomous ISR platform completed its longest uninterrupted mission, validating terrain-following algorithms and onboard edge AI across varied environments.",
+    image: "/image/Vigil/Vigil%2001.png",
   },
   {
     date: "MAR 28, 2026",
-    category: "PARTNERSHIP",
     title: "Orbotix and DoD Sign Multi-Year UMBRIX System Integration Contract",
-    excerpt:
-      "A landmark agreement to deploy UMBRIX persistent surveillance architecture across three critical infrastructure sites in the Indo-Pacific theater.",
+    image: "/image/VMBRA%20system/VMBRA_main.png",
   },
 ];
+
+function ArrowIcon() {
+  return (
+    <svg width="16" height="8" viewBox="0 0 16 8" fill="none">
+      <line x1="0" y1="4" x2="12" y2="4" stroke="currentColor" strokeWidth="1" />
+      <polyline points="9,1 13,4 9,7" stroke="currentColor" strokeWidth="1" fill="none" />
+    </svg>
+  );
+}
 
 export default function Newsroom() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="newsroom" className="relative bg-black pt-28 sm:pt-40 pb-28 sm:pb-36">
-      <div ref={ref} className="px-10">
-        <div className="flex items-end justify-between mb-6 sm:mb-8">
-          <h2 className="text-white text-[25px] font-medium uppercase tracking-normal leading-none">
-            Newsroom
-          </h2>
-          <button className="text-white/30 text-[10px] tracking-[0.3em] uppercase hover:text-white transition-colors">
-            All News →
-          </button>
-        </div>
+    <section id="newsroom" className="relative bg-black pt-56 sm:pt-80 pb-28 sm:pb-36 px-4 sm:px-10">
+      <div ref={ref}>
+        <h2 className="text-white text-[25px] font-medium uppercase tracking-normal leading-none mb-10 sm:mb-14">
+          Newsroom
+        </h2>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {news.map((item, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 items-start">
+          {/* ── 왼쪽 단 ── */}
+          <div>
+            <p className="text-white text-base sm:text-lg leading-relaxed mb-6">
+              The latest company developments, operational milestones, and industry perspectives from the Orbotix team.
+            </p>
+            <button className="inline-flex items-center gap-2 text-white text-base sm:text-lg uppercase hover:underline underline-offset-4">
+              See All News
+              <ArrowIcon />
+            </button>
+          </div>
+
+          {/* ── 오른쪽 단 ── */}
+          <div className="flex flex-col">
+            {news.map((item, i) => (
             <motion.article
               key={item.title}
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.55, delay: i * 0.12 }}
-              className="group bg-white/[0.16] p-7 hover:bg-white/[0.24] transition-all duration-300 cursor-pointer flex flex-col"
+              className={`group grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 sm:gap-8 items-start pb-4 sm:pb-5 cursor-pointer ${
+                i === 0 ? "" : "border-t border-white pt-4 sm:pt-5"
+              } ${i === news.length - 1 ? "border-b" : ""}`}
             >
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-white/30 text-[9px] tracking-[0.3em] uppercase font-mono">
-                  {item.category}
-                </span>
-                <span className="text-white/20 text-[9px] tracking-[0.15em] font-mono">
-                  {item.date}
-                </span>
+              <div>
+                <h3 className="text-white text-base sm:text-lg font-medium tracking-tight leading-snug mb-4 sm:mb-6 underline-offset-4 group-hover:underline">
+                  {item.title}
+                </h3>
+
+                <div className="flex items-center gap-6">
+                  <span className="text-white text-base sm:text-lg">{item.date}</span>
+                  <span className="flex items-center gap-2 text-white text-base sm:text-lg">
+                    Read More
+                    <ArrowIcon />
+                  </span>
+                </div>
               </div>
 
-              <h3 className="text-white text-base font-medium tracking-tight leading-snug mb-4 group-hover:text-white/90 transition-colors flex-1">
-                {item.title}
-              </h3>
-
-              <p className="text-white/40 text-sm leading-relaxed mb-6">{item.excerpt}</p>
-
-              <div className="flex items-center gap-2 text-white/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-white/60 transition-colors">
-                Read more
-                <svg width="16" height="8" viewBox="0 0 16 8" fill="none">
-                  <line x1="0" y1="4" x2="12" y2="4" stroke="currentColor" strokeWidth="1" />
-                  <polyline points="9,1 13,4 9,7" stroke="currentColor" strokeWidth="1" fill="none" />
-                </svg>
+              <div className="relative w-full sm:w-[160px] lg:w-[200px] aspect-[4/3] overflow-hidden shrink-0">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
+                />
               </div>
             </motion.article>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>

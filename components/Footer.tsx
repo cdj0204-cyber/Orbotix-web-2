@@ -3,19 +3,21 @@
 import Link from "next/link";
 
 const links = {
-  Products: [
+  Technology: [
     { label: "VASPYR-2", href: "/wasper-2" },
     { label: "VYGIL-1", href: "/vigil-1" },
   ],
-  Systems: [
-    { label: "ATX System", href: "#" },
-    { label: "UMBRIX System", href: "#" },
+  Solution: [
+    { label: "Defense", href: "#" },
+    { label: "Security", href: "#" },
   ],
   Company: [
     { label: "Mission", href: "#mission" },
     { label: "Leadership", href: "#leadership" },
-    { label: "Newsroom", href: "#newsroom" },
     { label: "Careers", href: "#" },
+  ],
+  Insight: [
+    { label: "Newsroom", href: "#newsroom" },
   ],
   Legal: [
     { label: "Privacy Policy", href: "#" },
@@ -113,7 +115,7 @@ export default function Footer() {
           </div>
 
           {/* 오른쪽: 링크 그룹 (Products / Systems / Company / Legal) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
             {Object.entries(links).map(([group, items]) => (
               <div key={group}>
                 <p className="text-white text-[15px] font-medium uppercase tracking-normal leading-tight mb-3">

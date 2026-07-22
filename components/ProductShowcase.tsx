@@ -14,14 +14,14 @@ const PRODUCTS: ProductCard[] = [
   {
     category: "ATX SYSTEM",
     title: "VASPYR-2",
-    subtitle: "Loitering Munition UAV",
+    subtitle: "Precision Strike. Rapid Deployment.",
     image: "/image/Wasper/Wasper_Main%204.png",
     href: "/wasper-2",
   },
   {
     category: "UMBRIX SYSTEM",
     title: "VYGIL-1",
-    subtitle: "Persistent Surveillance System",
+    subtitle: "Rapid-Response ISR. Real-Time Situational Awareness.",
     image: "/image/Vigil/Vigil%2001.png",
     href: "/vigil-1",
   },

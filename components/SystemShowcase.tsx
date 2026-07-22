@@ -12,16 +12,16 @@ interface SystemCard {
 
 const SYSTEMS: SystemCard[] = [
   {
-    category: "ATX SYSTEM",
-    title: "ATX SYSTEM",
-    subtitle: "Autonomous Strike Platform",
-    image: "/image/ATA%20system/ATA%20system_main.png",
+    category: "DEFENSE",
+    title: "DEFENSE",
+    subtitle: "Target acquisition, combat support, and precision strike operations.",
+    image: "/image/Defense/Swarm_02%20-%20CC.png",
     href: "#",
   },
   {
-    category: "UMBRIX SYSTEM",
-    title: "UMBRIX SYSTEM",
-    subtitle: "Persistent Surveillance Network",
+    category: "SECURITY",
+    title: "SECURITY",
+    subtitle: "Critical infrastructure protection, incident assessment, and rapid response operations.",
     image: "/image/VMBRA%20system/VMBRA_main.png",
     href: "#",
   },
@@ -29,15 +29,15 @@ const SYSTEMS: SystemCard[] = [
 
 export default function SystemShowcase() {
   return (
-    <section className="bg-black px-4 sm:px-10 pt-28 sm:pt-40 pb-0">
+    <section className="bg-black px-4 sm:px-10 pt-56 sm:pt-80 pb-0">
       <h2 className="text-white text-[25px] font-medium uppercase tracking-normal leading-none mb-6 sm:mb-8">
-        Systems
+        Solution
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
         {SYSTEMS.map((s) => (
           <div
             key={s.title}
-            className="group relative overflow-hidden aspect-[16/10] sm:aspect-[16/9]"
+            className="group relative overflow-hidden aspect-[16/10]"
           >
             {/* 배경 렌더링 이미지 */}
             <img
@@ -51,7 +51,7 @@ export default function SystemShowcase() {
               className="absolute inset-0 pointer-events-none"
               style={{
                 background:
-                  "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.85) 100%)",
+                  "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.6) 100%)",
               }}
             />
 
@@ -67,13 +67,13 @@ export default function SystemShowcase() {
               <div className="flex items-center gap-3">
                 <Link
                   href={s.href}
-                  className="px-7 sm:px-9 py-2.5 bg-white text-black text-[11px] sm:text-xs font-semibold tracking-widest uppercase hover:bg-white/85 transition-colors"
+                  className="px-6 sm:px-7 h-8 sm:h-9 inline-flex items-center justify-center bg-white text-black text-sm sm:text-base font-semibold hover:bg-white/85 transition-colors"
                 >
-                  View Details
+                  Learn More
                 </Link>
                 <Link
                   href="#"
-                  className="px-7 sm:px-9 py-2.5 bg-black/30 backdrop-blur-sm border border-white/40 text-white text-[11px] sm:text-xs font-semibold tracking-widest uppercase hover:bg-white hover:text-black hover:border-white transition-all"
+                  className="px-6 sm:px-7 h-8 sm:h-9 inline-flex items-center justify-center bg-black/30 backdrop-blur-sm border border-white/40 text-white text-sm sm:text-base font-semibold hover:bg-white hover:text-black hover:border-white transition-all"
                 >
                   Ask Quote
                 </Link>
