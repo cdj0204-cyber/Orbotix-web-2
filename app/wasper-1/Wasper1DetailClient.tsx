@@ -37,8 +37,11 @@ const features = [
 ];
 
 const featureVideos: Record<number, string> = {
+  7: "/video/VASPYR-1/7.mp4",
   8: "/video/VASPYR-1/9_Swarm.mp4",
   9: "/video/VASPYR-1/8_GNSS.mp4",
+  10: "/video/VASPYR-1/10.mp4",
+  11: "/video/VASPYR-1/11.mp4",
 };
 
 const conops = [
@@ -284,21 +287,24 @@ export default function Wasper1DetailClient() {
             {features.map((f, i) => (
               <div
                 key={f.title}
-                className="shrink-0 basis-[85%] sm:basis-[31%] snap-start bg-white p-6"
+                className="relative shrink-0 basis-[85%] sm:basis-[31%] snap-start bg-white p-6 pb-16"
               >
                 {featureVideos[7 + i] ? (
                   <VideoBlock
                     src={featureVideos[7 + i]}
-                    className="w-full aspect-[4/3] mb-4"
+                    className="w-full aspect-[4/3] mb-[90px]"
                     hoverPlay
                   />
                 ) : (
-                  <Placeholder n={7 + i} light className="w-full aspect-[4/3] mb-4" />
+                  <Placeholder n={7 + i} light className="w-full aspect-[4/3] mb-[90px]" />
                 )}
-                <h3 className="text-black text-base sm:text-lg font-medium uppercase tracking-normal leading-snug mb-4">
+                <h3 className="text-black text-base sm:text-lg font-medium uppercase tracking-normal leading-snug mb-[10px]">
                   {String(i + 1).padStart(2, "0")}. {f.title}
                 </h3>
                 <p className="text-black text-base sm:text-lg leading-relaxed">{f.body}</p>
+                <div className="absolute right-6 bottom-6 text-black text-base sm:text-lg leading-relaxed">
+                  {String(i + 1).padStart(2, "0")}/{String(features.length).padStart(2, "0")}
+                </div>
               </div>
             ))}
           </div>
