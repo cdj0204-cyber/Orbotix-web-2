@@ -1,0 +1,389 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+/* 2단계 텍스트 크기만 사용: 헤더(섹션 타이틀) / 본문(다른 섹션과 동일) */
+const HEADER = "text-white text-[25px] font-medium uppercase tracking-normal leading-none";
+const BODY = "text-white text-base sm:text-lg leading-relaxed";
+
+const specs = [
+  { label: "Weight", value: "2.3 kg" },
+  { label: "Range", value: "15 km" },
+  { label: "Max Speed", value: "70 km/h" },
+  { label: "Endurance", value: "< 30 min" },
+];
+
+const features = [
+  {
+    title: "EO/IR Precision Imaging",
+    body: "Capture high-resolution visual and thermal imagery for long-range observation, day and night reconnaissance, and operational monitoring.",
+  },
+  {
+    title: "Resilient Communications",
+    body: "Maintain secure command, control, and real-time video transmission through encrypted frequency-hopping communications in degraded environments.",
+  },
+  {
+    title: "Obstacle Detection",
+    body: "Five-LiDAR obstacle detection supports safe autonomous navigation and reliable flight in complex operational environments.",
+  },
+  {
+    title: "Custom C2 Platform",
+    body: "Mission planning, live video monitoring, and intuitive flight management through Orbotix's proprietary ground control software.",
+  },
+];
+
+const featureVideos: Record<number, string> = {
+  7: "/video/VASPYR-1/7.mp4",
+  8: "/video/VASPYR-1/9_Swarm.mp4",
+  9: "/video/VASPYR-1/8_GNSS.mp4",
+  10: "/video/VASPYR-1/10.mp4",
+  11: "/video/VASPYR-1/11.mp4",
+};
+
+const conops = [
+  {
+    title: "Rapid Incident Verification",
+    body: "Respond quickly with aerial reconnaissance to verify incidents, assess threats, and\nestablish situational awareness before taking action.",
+  },
+  {
+    title: "Extended Operational Awareness",
+    body: "Maintain continuous visibility with EO/IR imagery to support informed decisions across\nlarge and complex operational environments.",
+  },
+  {
+    title: "Critical Infrastructure Monitoring",
+    body: "Inspect and monitor critical infrastructure with rapid aerial reconnaissance to support\nasset protection and incident response.",
+  },
+  {
+    title: "Persistent Mission Support",
+    body: "Provide continuous aerial coverage throughout the mission with live\nEO/IR imagery and resilient communications.",
+  },
+];
+
+const conopsVideos: Record<number, string> = {
+  12: "/video/VYGIL-2/Weapon_Fin%201.mp4",
+  13: "/video/VYGIL-2/Fire_Fin%201.mp4",
+  14: "/video/VYGIL-2/Drone_Fin.mp4",
+  15: "/video/VYGIL-2/Car_Fin.mp4",
+};
+
+/* 이미지 자리를 회색 영역 + 번호로 표시 (추후 실제 이미지로 교체) */
+function Placeholder({ n, className = "", light = false }: { n: number; className?: string; light?: boolean }) {
+  return (
+    <div
+      className={`flex items-center justify-center ${
+        light ? "bg-black/10 border border-black/10" : "bg-white/10 border border-white/10"
+      } ${className}`}
+    >
+      <span className={`text-base sm:text-lg leading-relaxed ${light ? "text-black" : "text-white"}`}>
+        {String(n).padStart(2, "0")}
+      </span>
+    </div>
+  );
+}
+
+function VideoBlock({
+  src,
+  className = "",
+  loop = true,
+  playOnView = false,
+  hoverPlay = false,
+  zoom = 1,
+  fit = "cover",
+  nativeAspect = 16 / 9,
+}: {
+  src: string;
+  className?: string;
+  loop?: boolean;
+  playOnView?: boolean;
+  hoverPlay?: boolean;
+  zoom?: number;
+  fit?: "cover" | "contain";
+  nativeAspect?: number;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  /* contain 모드일 때: 컨테이너 높이가 확대된(zoom) 영상 높이에 항상 맞춰지도록 자동 계산 */
+  const containerStyle =
+    fit === "contain" ? { aspectRatio: `${nativeAspect / zoom}` } : undefined;
+
+  useEffect(() => {
+    if (!playOnView) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.currentTime = 0;
+          video.play();
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [playOnView]);
+
+  const handleMouseEnter = () => {
+    if (!hoverPlay) return;
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = 0;
+    video.play();
+  };
+  const handleMouseLeave = () => {
+    if (!hoverPlay) return;
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    video.currentTime = 0;
+  };
+
+  return (
+    <div
+      className={`relative overflow-hidden ${className}`}
+      style={containerStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <video
+        ref={videoRef}
+        className={`absolute inset-0 w-full h-full ${fit === "contain" ? "object-contain" : "object-cover"}`}
+        style={zoom !== 1 ? { transform: `scale(${zoom})` } : undefined}
+        src={src}
+        autoPlay={!playOnView && !hoverPlay}
+        loop={loop}
+        muted
+        playsInline
+      />
+    </div>
+  );
+}
+
+function ArrowIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg width="16" height="8" viewBox="0 0 16 8" fill="none" className={className}>
+      <line x1="0" y1="4" x2="12" y2="4" stroke="currentColor" strokeWidth="1" />
+      <polyline points="9,1 13,4 9,7" stroke="currentColor" strokeWidth="1" fill="none" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg width="10" height="16" viewBox="0 0 10 16" fill="none" className={className}>
+      <polyline
+        points="1,1 9,8 1,15"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export default function Vigil2DetailClient() {
+  const [activeConcept, setActiveConcept] = useState(0);
+  const featuresScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollFeatures = (dir: 1 | -1) => {
+    const el = featuresScrollRef.current;
+    if (!el) return;
+    const card = el.firstElementChild as HTMLElement | null;
+    const amount = card ? card.getBoundingClientRect().width + 24 : el.clientWidth * 0.31;
+    el.scrollBy({ left: dir * amount, behavior: "smooth" });
+  };
+
+  return (
+    <div className="bg-black">
+      {/* ── 0. 메인 이미지 ── */}
+      <section className="pt-16 px-4 sm:px-10">
+        <VideoBlock src="/video/VYGIL-2/Suspect_Fin%201.mp4" className="w-full aspect-[1920/900]" />
+      </section>
+
+      {/* ── 1. 타이틀 + 설명 ── */}
+      <section className="px-4 sm:px-10 pt-16 sm:pt-24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 items-start">
+          <h1 className="text-white text-[200px] font-medium uppercase tracking-normal leading-none">
+            VIGIL-1
+          </h1>
+          <p className={`${BODY} mt-5 sm:mt-7`}>
+            RAPID-RESPONSE AUTONOMOUS ISR DRONE
+            <br />
+            VIGIL-1 is an autonomous ISR UAV designed to support reconnaissance missions through EO/IR imaging, resilient communications, and rapid deployment in complex environments. It delivers real-time intelligence to operators across defense, security, and public safety operations.
+          </p>
+        </div>
+      </section>
+
+      {/* ── 2. 이미지(썸네일+메인) + DETAIL SPEC ── */}
+      <section className="px-4 sm:px-10 pt-[300px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          {/* 왼쪽: DETAIL SPEC */}
+          <div>
+            <h2 className={`${HEADER} mb-6`}>Detail Spec</h2>
+            <div className="grid grid-cols-2 gap-x-8">
+              <div className="flex flex-col divide-y divide-white border-t border-white">
+                {specs.map((s) => (
+                  <div key={s.label} className="flex items-center justify-between pt-1 sm:pt-1.5 pb-2 sm:pb-3">
+                    <span className={BODY}>{s.label}</span>
+                    <span className={BODY}>{s.value}</span>
+                  </div>
+                ))}
+              </div>
+              <div />
+            </div>
+          </div>
+
+          {/* 오른쪽: 영상 (전체 폭) */}
+          <VideoBlock
+            src="/video/VYGIL-2/VIGIL_TURNTABLE(x2.0)_Fixed.mp4"
+            className="w-full"
+            loop={false}
+            playOnView
+            zoom={1.4}
+            fit="contain"
+          />
+        </div>
+      </section>
+
+      {/* ── 3. FEATURES (카드 캐러셀: 3개 + 4번째 일부) ── */}
+      <section className="px-4 sm:px-10 pt-[300px]">
+        <div className="flex items-end justify-between mb-6">
+          <h2 className={HEADER}>Features</h2>
+          <a href="#" className="flex items-center gap-2 text-white text-sm sm:text-base hover:underline underline-offset-4">
+            Download Technical Specifications
+            <ArrowIcon />
+          </a>
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => scrollFeatures(-1)}
+            aria-label="Previous"
+            className="absolute top-1/2 -translate-y-1/2 left-4 z-10 w-10 h-20 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-white hover:text-black transition-colors"
+          >
+            <ChevronIcon className="-scale-x-100" />
+          </button>
+          <button
+            onClick={() => scrollFeatures(1)}
+            aria-label="Next"
+            className="absolute top-1/2 -translate-y-1/2 right-4 z-10 w-10 h-20 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-white hover:text-black transition-colors"
+          >
+            <ChevronIcon />
+          </button>
+
+          <div
+            ref={featuresScrollRef}
+            className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {features.map((f, i) => (
+              <div
+                key={f.title}
+                className="relative shrink-0 basis-[85%] sm:basis-[31%] snap-start bg-white p-6 pb-16"
+              >
+                {featureVideos[7 + i] ? (
+                  <VideoBlock
+                    src={featureVideos[7 + i]}
+                    className="w-full aspect-[4/3] mb-[90px]"
+                    hoverPlay
+                  />
+                ) : (
+                  <Placeholder n={7 + i} light className="w-full aspect-[4/3] mb-[90px]" />
+                )}
+                <h3 className="text-black text-base sm:text-lg font-medium uppercase tracking-normal leading-snug mb-[10px]">
+                  {String(i + 1).padStart(2, "0")}. {f.title}
+                </h3>
+                <p className="text-black text-base sm:text-lg leading-relaxed">{f.body}</p>
+                <div className="absolute right-6 bottom-6 text-black text-base sm:text-lg leading-relaxed">
+                  {String(i + 1).padStart(2, "0")}/{String(features.length).padStart(2, "0")}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. POWERED BY ATA ── */}
+      <section className="pt-[300px]">
+        <div className="relative w-full aspect-[16/7]">
+          <img
+            src="/image/VASPYR-1/ATA%20system_main.png"
+            alt="Powered by ATA System"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 px-4 sm:px-10 pt-8 sm:pt-12">
+            <div className="max-w-xl">
+              <h2 className={`${HEADER} mb-6`}>Powered by ATA System</h2>
+              <p className={BODY}>
+                Developed by Orbotix, ATA is the proprietary software that powers VIGIL-1's mission execution in defense applications, supporting autonomous mission functions under human command.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5. CONCEPT OF OPERATION ── */}
+      <section className="px-4 sm:px-10 pt-[300px]">
+        <h2 className={`${HEADER} mb-6`}>Operational Advantages</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 왼쪽: 번호 + 타이틀 목록 */}
+          <div className="flex flex-col gap-3">
+            {conops.map((c, i) => (
+              <button
+                key={c.title}
+                onClick={() => setActiveConcept(i)}
+                className={`text-[25px] font-medium uppercase tracking-normal leading-none text-left transition-colors ${
+                  i === activeConcept
+                    ? "text-white underline underline-offset-4"
+                    : "text-white/40 hover:text-white"
+                }`}
+              >
+                {String(i + 1).padStart(2, "0")}. {c.title}
+              </button>
+            ))}
+          </div>
+
+          {/* 오른쪽: 이미지 + 본문 */}
+          <div>
+            {conopsVideos[12 + activeConcept] ? (
+              <VideoBlock
+                key={activeConcept}
+                src={conopsVideos[12 + activeConcept]}
+                className="w-full aspect-[4/2.5] mb-6"
+              />
+            ) : (
+              <Placeholder n={12 + activeConcept} className="w-full aspect-[4/2.5] mb-6" />
+            )}
+            <p className={BODY}>
+              {conops[activeConcept].body.split("\n").map((line, idx, arr) => (
+                <span key={idx}>
+                  {line}
+                  {idx < arr.length - 1 && <br />}
+                </span>
+              ))}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6. OPERATION DEMO ── */}
+      <section className="px-4 sm:px-10 pt-[300px] pb-16 sm:pb-24">
+        <h2 className={`${HEADER} mb-6`}>Operation Demo</h2>
+        <div className="group relative">
+          <VideoBlock src="/video/VYGIL-2/Demo%202.mp4" className="w-full aspect-[16/7]" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors pointer-events-none flex items-center justify-center">
+            <button
+              type="button"
+              className="pointer-events-auto px-8 py-3 border border-white text-white text-sm sm:text-base font-semibold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-black"
+            >
+              Request Demo
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

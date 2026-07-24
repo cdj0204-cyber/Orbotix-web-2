@@ -47,23 +47,23 @@ const featureVideos: Record<number, string> = {
 const conops = [
   {
     title: "Precision Effects",
-    body: "Deliver precision effects against designated targets while reducing collateral impact. WASPER-1 enables accurate target engagement across dynamic operational environments.",
+    body: "Deliver precision effects against designated targets while reducing collateral impact. WASPER-1 enables accurate\ntarget engagement across dynamic operational environments.",
   },
   {
     title: "Beyond Line-of-Sight Engagement",
-    body: "Extend operational reach by engaging designated targets beyond the direct line of sight, allowing operators to respond to threats while maintaining safe stand-off distances.",
+    body: "Extend operational reach by engaging designated targets beyond the direct line of sight, allowing operators\nto respond to threats while maintaining safe stand-off distances.",
   },
   {
     title: "Precision Guidance",
-    body: "ATA supports target acquisition and terminal guidance throughout the final phase of flight, helping operators maintain precision from launch to mission execution.",
+    body: "ATA supports target acquisition and terminal guidance throughout the final phase of flight, helping operators\nmaintain precision from launch to mission execution.",
   },
   {
     title: "Mission Adaptability",
-    body: "Support a wide range of operational scenarios with a single precision strike platform. WASPER-1 adapts to evolving mission requirements while delivering consistent operational performance.",
+    body: "Support a wide range of operational scenarios with a single precision strike platform. WASPER-1 adapts\nto evolving mission requirements while delivering consistent operational performance.",
   },
   {
     title: "Rapid Mission Execution",
-    body: "Respond quickly to emerging threats with a platform designed for rapid deployment and immediate mission execution, enabling operators to act as operational conditions evolve.",
+    body: "Respond quickly to emerging threats with a platform designed for rapid deployment and immediate mission execution,\nenabling operators to act as operational conditions evolve.",
   },
 ];
 
@@ -244,7 +244,7 @@ export default function Wasper1DetailClient() {
 
           {/* 오른쪽: 영상 (전체 폭) */}
           <VideoBlock
-            src="/video/VASPYR-1/WASPER_turnning.mp4"
+            src="/video/VASPYR-1/WASPER_TURNTABLE(x2.0))_Fixed.mp4"
             className="w-full"
             loop={false}
             playOnView
@@ -330,9 +330,9 @@ export default function Wasper1DetailClient() {
         </div>
       </section>
 
-      {/* ── 5. CONCEPT OF OPERATION ── */}
+      {/* ── 5. OPERATIONAL ADVANTAGES ── */}
       <section className="px-4 sm:px-10 pt-[300px]">
-        <h2 className={`${HEADER} mb-6`}>Concept of Operation</h2>
+        <h2 className={`${HEADER} mb-6`}>Operational Advantages</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 왼쪽: 번호 + 타이틀 목록 */}
           <div className="flex flex-col gap-3">
@@ -351,10 +351,17 @@ export default function Wasper1DetailClient() {
             ))}
           </div>
 
-          {/* 오른쪽: 본문 + 이미지 */}
+          {/* 오른쪽: 이미지 + 본문 */}
           <div>
-            <p className={`${BODY} mb-6`}>{conops[activeConcept].body}</p>
-            <Placeholder n={12 + activeConcept} className="w-full aspect-[4/3]" />
+            <Placeholder n={12 + activeConcept} className="w-full aspect-[4/2.5] mb-6" />
+            <p className={BODY}>
+              {conops[activeConcept].body.split("\n").map((line, idx, arr) => (
+                <span key={idx}>
+                  {line}
+                  {idx < arr.length - 1 && <br />}
+                </span>
+              ))}
+            </p>
           </div>
         </div>
       </section>
