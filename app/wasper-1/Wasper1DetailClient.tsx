@@ -15,22 +15,31 @@ const specs = [
 
 const features = [
   {
-    title: "EO/IR PRECISION IMAGING",
-    body: "Capture high-resolution visual and thermal imagery for long-range observation, day and night reconnaissance, and intelligence collection.",
+    title: "Autonomous Strike",
+    body: "Designed for precision strike missions through autonomous terminal guidance following operator target selection.",
   },
   {
-    title: "RESILIENT COMMUNICATIONS",
-    body: "Maintain secure command, control, and real-time video transmission through encrypted frequency-hopping communications in degraded environments.",
+    title: "Operations in GNSS-Denied Environments",
+    body: "Maintain mission continuity in GNSS-denied and Electronic Warfare (EW) environments through secure, resilient communications designed for contested operations.",
   },
   {
     title: "SWARMING OPERATION",
     body: "Coordinate multiple UAVs in swarming drone operations to increase operational reach, mission flexibility, and strike effectiveness.",
   },
   {
-    title: "CUSTOM C2 PLATFORM",
-    body: "Mission planning, live video monitoring, and intuitive flight management through Orbotix's proprietary ground control software.",
+    title: "Terminal Guidance",
+    body: "Maintain precision during the final phase of flight to support accurate target engagement.",
+  },
+  {
+    title: "Payload Dropping",
+    body: "Deliver mission payloads with precision to support tactical operations across a range of operational scenarios.",
   },
 ];
+
+const featureVideos: Record<number, string> = {
+  8: "/video/VASPYR-1/9_Swarm.mp4",
+  9: "/video/VASPYR-1/8_GNSS.mp4",
+};
 
 const conops = [
   {
@@ -56,10 +65,16 @@ const conops = [
 ];
 
 /* 이미지 자리를 회색 영역 + 번호로 표시 (추후 실제 이미지로 교체) */
-function Placeholder({ n, className = "" }: { n: number; className?: string }) {
+function Placeholder({ n, className = "", light = false }: { n: number; className?: string; light?: boolean }) {
   return (
-    <div className={`relative bg-white/10 border border-white/10 flex items-center justify-center ${className}`}>
-      <span className={`${BODY} group-hover:text-black transition-colors`}>{String(n).padStart(2, "0")}</span>
+    <div
+      className={`flex items-center justify-center ${
+        light ? "bg-black/10 border border-black/10" : "bg-white/10 border border-white/10"
+      } ${className}`}
+    >
+      <span className={`text-base sm:text-lg leading-relaxed ${light ? "text-black" : "text-white"}`}>
+        {String(n).padStart(2, "0")}
+      </span>
     </div>
   );
 }
@@ -69,6 +84,7 @@ function VideoBlock({
   className = "",
   loop = true,
   playOnView = false,
+  hoverPlay = false,
   zoom = 1,
   fit = "cover",
   nativeAspect = 16 / 9,
@@ -77,6 +93,7 @@ function VideoBlock({
   className?: string;
   loop?: boolean;
   playOnView?: boolean;
+  hoverPlay?: boolean;
   zoom?: number;
   fit?: "cover" | "contain";
   nativeAspect?: number;
@@ -106,14 +123,34 @@ function VideoBlock({
     return () => observer.disconnect();
   }, [playOnView]);
 
+  const handleMouseEnter = () => {
+    if (!hoverPlay) return;
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = 0;
+    video.play();
+  };
+  const handleMouseLeave = () => {
+    if (!hoverPlay) return;
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    video.currentTime = 0;
+  };
+
   return (
-    <div className={`relative overflow-hidden ${className}`} style={containerStyle}>
+    <div
+      className={`relative overflow-hidden ${className}`}
+      style={containerStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <video
         ref={videoRef}
         className={`absolute inset-0 w-full h-full ${fit === "contain" ? "object-contain" : "object-cover"}`}
         style={zoom !== 1 ? { transform: `scale(${zoom})` } : undefined}
         src={src}
-        autoPlay={!playOnView}
+        autoPlay={!playOnView && !hoverPlay}
         loop={loop}
         muted
         playsInline
@@ -122,8 +159,41 @@ function VideoBlock({
   );
 }
 
+function ArrowIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg width="16" height="8" viewBox="0 0 16 8" fill="none" className={className}>
+      <line x1="0" y1="4" x2="12" y2="4" stroke="currentColor" strokeWidth="1" />
+      <polyline points="9,1 13,4 9,7" stroke="currentColor" strokeWidth="1" fill="none" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg width="10" height="16" viewBox="0 0 10 16" fill="none" className={className}>
+      <polyline
+        points="1,1 9,8 1,15"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function Wasper1DetailClient() {
   const [activeConcept, setActiveConcept] = useState(0);
+  const featuresScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollFeatures = (dir: 1 | -1) => {
+    const el = featuresScrollRef.current;
+    if (!el) return;
+    const card = el.firstElementChild as HTMLElement | null;
+    const amount = card ? card.getBoundingClientRect().width + 24 : el.clientWidth * 0.31;
+    el.scrollBy({ left: dir * amount, behavior: "smooth" });
+  };
 
   return (
     <div className="bg-black">
@@ -141,15 +211,17 @@ export default function Wasper1DetailClient() {
           <p className={`${BODY} mt-5 sm:mt-7`}>
             Precision Strike UAV
             <br />
-            VASPYR-1 is engineered for precision strike missions across dynamic operational environments, combining autonomous navigation,
+            WASPER-1 integrates autonomous mission capabilities that enhance operational flexibility, coordinated strike execution,
             <br />
-            AI-assisted targeting, and rapid deployment to support mission-critical strike operations.
+            and mission effectiveness — making it ideally suited for precision strike and target engagement missions in contested
+            <br />
+            operational environments.
           </p>
         </div>
       </section>
 
       {/* ── 2. 이미지(썸네일+메인) + DETAIL SPEC ── */}
-      <section className="px-4 sm:px-10 pt-[164px] sm:pt-[196px]">
+      <section className="px-4 sm:px-10 pt-[300px]">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* 왼쪽: DETAIL SPEC */}
           <div>
@@ -179,24 +251,81 @@ export default function Wasper1DetailClient() {
         </div>
       </section>
 
-      {/* ── 3. FEATURES (4단 그리드) ── */}
-      <section className="px-4 sm:px-10 pt-[164px] sm:pt-[196px]">
-        <h2 className={`${HEADER} mb-6`}>Features</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((f, i) => (
-            <div key={f.title} className="group bg-white/10 hover:bg-white p-6 transition-colors cursor-pointer">
-              <Placeholder n={7 + i} className="w-full aspect-[4/3] mb-4" />
-              <h3 className={`text-white text-base sm:text-lg font-medium uppercase tracking-normal leading-snug mb-4 group-hover:text-black transition-colors`}>
-                {f.title}
-              </h3>
-              <p className={`${BODY} group-hover:text-black transition-colors`}>{f.body}</p>
-            </div>
-          ))}
+      {/* ── 3. FEATURES (카드 캐러셀: 3개 + 4번째 일부) ── */}
+      <section className="px-4 sm:px-10 pt-[300px]">
+        <div className="flex items-end justify-between mb-6">
+          <h2 className={HEADER}>Features</h2>
+          <a href="#" className="flex items-center gap-2 text-white text-sm sm:text-base hover:underline underline-offset-4">
+            Download Technical Specifications
+            <ArrowIcon />
+          </a>
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => scrollFeatures(-1)}
+            aria-label="Previous"
+            className="absolute top-1/2 -translate-y-1/2 left-4 z-10 w-10 h-20 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-white hover:text-black transition-colors"
+          >
+            <ChevronIcon className="-scale-x-100" />
+          </button>
+          <button
+            onClick={() => scrollFeatures(1)}
+            aria-label="Next"
+            className="absolute top-1/2 -translate-y-1/2 right-4 z-10 w-10 h-20 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-white hover:text-black transition-colors"
+          >
+            <ChevronIcon />
+          </button>
+
+          <div
+            ref={featuresScrollRef}
+            className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {features.map((f, i) => (
+              <div
+                key={f.title}
+                className="shrink-0 basis-[85%] sm:basis-[31%] snap-start bg-white p-6"
+              >
+                {featureVideos[7 + i] ? (
+                  <VideoBlock
+                    src={featureVideos[7 + i]}
+                    className="w-full aspect-[4/3] mb-4"
+                    hoverPlay
+                  />
+                ) : (
+                  <Placeholder n={7 + i} light className="w-full aspect-[4/3] mb-4" />
+                )}
+                <h3 className="text-black text-base sm:text-lg font-medium uppercase tracking-normal leading-snug mb-4">
+                  {String(i + 1).padStart(2, "0")}. {f.title}
+                </h3>
+                <p className="text-black text-base sm:text-lg leading-relaxed">{f.body}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── 4. CONCEPT OF OPERATION ── */}
-      <section className="px-4 sm:px-10 pt-[264px] sm:pt-[296px]">
+      {/* ── 4. POWERED BY ATA ── */}
+      <section className="pt-[300px]">
+        <div className="relative w-full aspect-[16/7]">
+          <img
+            src="/image/VASPYR-1/ATA%20system_main.png"
+            alt="Powered by ATA System"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 px-4 sm:px-10 pt-8 sm:pt-12">
+            <div className="max-w-xl">
+              <h2 className={`${HEADER} mb-6`}>Powered by ATA System</h2>
+              <p className={BODY}>
+                Developed by Orbotix, ATA is the proprietary software behind WASPER-1, supporting autonomous mission functions under human command.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5. CONCEPT OF OPERATION ── */}
+      <section className="px-4 sm:px-10 pt-[300px]">
         <h2 className={`${HEADER} mb-6`}>Concept of Operation</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 왼쪽: 번호 + 타이틀 목록 */}
@@ -219,16 +348,25 @@ export default function Wasper1DetailClient() {
           {/* 오른쪽: 본문 + 이미지 */}
           <div>
             <p className={`${BODY} mb-6`}>{conops[activeConcept].body}</p>
-            <Placeholder n={11 + activeConcept} className="w-full aspect-[4/3]" />
+            <Placeholder n={12 + activeConcept} className="w-full aspect-[4/3]" />
           </div>
         </div>
       </section>
 
-      {/* ── 5. OPERATION DEMO ── */}
-      <section className="px-4 sm:px-10 pt-16 sm:pt-24 pb-16 sm:pb-24">
-        <p className={`${BODY} mb-2`}>VASPYR-1</p>
+      {/* ── 6. OPERATION DEMO ── */}
+      <section className="px-4 sm:px-10 pt-[300px] pb-16 sm:pb-24">
         <h2 className={`${HEADER} mb-6`}>Operation Demo</h2>
-        <VideoBlock src="/video/VASPYR-1/WASPER_DEMO.mp4" className="w-full aspect-video" />
+        <div className="group relative">
+          <VideoBlock src="/video/VASPYR-1/WASPER_DEMO.mp4" className="w-full aspect-[16/7]" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors pointer-events-none flex items-center justify-center">
+            <button
+              type="button"
+              className="pointer-events-auto px-8 py-3 border border-white text-white text-sm sm:text-base font-semibold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-black"
+            >
+              Request Demo
+            </button>
+          </div>
+        </div>
       </section>
     </div>
   );
